@@ -10,7 +10,12 @@
     <canvas id="glCanvas"></canvas>
     <script>
         const canvas = document.getElementById("glCanvas");
-        const gl = canvas.getContext("webgl");
+const gl = canvas.getContext("webgl");
+if (!gl) {
+    console.error("WebGL non supporté !");
+}
+
+
 
         // Initialisation du shader
         const vertexShaderSource = `
