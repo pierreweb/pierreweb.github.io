@@ -66,11 +66,16 @@
     gl.attachShader(program, vertexShader);
     gl.attachShader(program, fragmentShader);
     gl.linkProgram(program);
-    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-        console.error(gl.getProgramInfoLog(program));
-        gl.deleteProgram(program);
-        return;
-    }
+
+
+if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+    console.error(gl.getProgramInfoLog(program));
+    gl.deleteProgram(program);
+    throw new Error("Échec du linkage du programme WebGL");
+}
+
+
+    
     gl.useProgram(program);
 
     // Création du triangle couvrant tout l'écran
