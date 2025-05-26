@@ -16,7 +16,7 @@
             alert("WebGL non supporté !");
         }
 
-        // Vertex Shader (simple)
+        // Vertex Shader
         const vertexShaderSource = `
             attribute vec2 a_position;
             void main() {
@@ -24,7 +24,7 @@
             }
         `;
 
-        // Fragment Shader (couleur animée)
+        // Fragment Shader (change de couleur avec le temps)
         const fragmentShaderSource = `
             precision mediump float;
             uniform float u_time;
@@ -52,12 +52,15 @@
         gl.linkProgram(program);
         gl.useProgram(program);
 
+        // Passage correct de l'uniforme u_time
         const timeUniform = gl.getUniformLocation(program, "u_time");
 
         function render(time) {
-            gl.uniform1f(timeUniform, time * 0.001);
+            gl.uniform1f(timeUniform, time * 0.001); // Mise à jour de u_time
+
             gl.clearColor(0.0, 0.0, 0.0, 1.0);
             gl.clear(gl.COLOR_BUFFER_BIT);
+            
             requestAnimationFrame(render);
         }
 
@@ -65,3 +68,4 @@
     </script>
 </body>
 </html>
+
