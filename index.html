@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Shader Rouge</title>
+    <title>Shader Animé</title>
 </head>
 <body>
     <canvas id="glCanvas"></canvas>
@@ -12,22 +12,27 @@
         canvas.height = window.innerHeight;
         const gl = canvas.getContext("webgl");
 
-        // Vérification WebGL
         if (!gl) {
             alert("WebGL non supporté !");
         }
 
-        // Création du shader fragmentaire (ROUGE)
-        const fragmentShaderSource = `
-            void main() {
-                gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0); // Rouge
-            }
-        `;
-
+        // Vertex Shader (simple)
         const vertexShaderSource = `
             attribute vec2 a_position;
             void main() {
                 gl_Position = vec4(a_position, 0.0, 1.0);
+            }
+        `;
+
+        // Fragment Shader (couleur animée)
+        const fragmentShaderSource = `
+            precision mediump float;
+            uniform float u_time;
+            void main() {
+                float r = abs(sin(u_time * 0.1));
+                float g = abs(cos(u_time * 0.2));
+                float b = abs(sin(u_time * 0.3));
+                gl_FragColor = vec4(r, g, b, 1.0);
             }
         `;
 
@@ -47,8 +52,16 @@
         gl.linkProgram(program);
         gl.useProgram(program);
 
-        gl.clearColor(1.0, 0.0, 0.0, 1.0); // Fond rouge
-        gl.clear(gl.COLOR_BUFFER_BIT);
+        const timeUniform = gl.getUniformLocation(program, "u_time");
+
+        function render(time) {
+            gl.uniform1f(timeUniform, time * 0.001);
+            gl.clearColor(0.0, 0.0, 0.0, 1.0);
+            gl.clear(gl.COLOR_BUFFER_BIT);
+            requestAnimationFrame(render);
+        }
+
+        requestAnimationFrame(render);
     </script>
 </body>
 </html>
