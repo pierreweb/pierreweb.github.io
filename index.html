@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Shader Simple</title>
+    <title>Shader Rouge</title>
 </head>
 <body>
     <canvas id="glCanvas"></canvas>
@@ -17,20 +17,17 @@
             alert("WebGL non supporté !");
         }
 
-        // Shader vertex simple
+        // Création du shader fragmentaire (ROUGE)
+        const fragmentShaderSource = `
+            void main() {
+                gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0); // Rouge
+            }
+        `;
+
         const vertexShaderSource = `
             attribute vec2 a_position;
             void main() {
                 gl_Position = vec4(a_position, 0.0, 1.0);
-            }
-        `;
-
-        // Shader fragment simple (change de couleur avec le temps)
-        const fragmentShaderSource = `
-            precision mediump float;
-            uniform float u_time;
-            void main() {
-                gl_FragColor = vec4(abs(sin(u_time)), abs(cos(u_time)), 0.5, 1.0);
             }
         `;
 
@@ -50,13 +47,8 @@
         gl.linkProgram(program);
         gl.useProgram(program);
 
-        function render(time) {
-            const timeUniform = gl.getUniformLocation(program, "u_time");
-            gl.uniform1f(timeUniform, time * 0.001);
-            gl.drawArrays(gl.TRIANGLES, 0, 3);
-            requestAnimationFrame(render);
-        }
-        requestAnimationFrame(render);
+        gl.clearColor(1.0, 0.0, 0.0, 1.0); // Fond rouge
+        gl.clear(gl.COLOR_BUFFER_BIT);
     </script>
 </body>
 </html>
