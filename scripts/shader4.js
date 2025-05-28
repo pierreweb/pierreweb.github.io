@@ -47,11 +47,26 @@ const program = createProgram(gl, vs, fs);
 gl.useProgram(program);
 
 // === ATTRIBUTES / UNIFORMS ===
+const positionAttrib = gl.getAttribLocation(program, "a_position");
 const resolutionUniform = gl.getUniformLocation(program, "u_resolution");
 const translationUniform = gl.getUniformLocation(program, "u_translation");
 const radiusUniform = gl.getUniformLocation(program, "u_radius");
 const timeUniform = gl.getUniformLocation(program, "u_time");
 const indexUniform = gl.getUniformLocation(program, "u_index");
+
+// === BUFFER DE VERTICES ===
+// Un rectangle couvrant tout l'écran
+const vertices = new Float32Array([
+    -1, -1,
+     1, -1,
+    -1,  1,
+     1,  1
+]);
+const buffer = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+gl.enableVertexAttribArray(positionAttrib);
+gl.vertexAttribPointer(positionAttrib, 2, gl.FLOAT, false, 0, 0);
 
 // === CERCLES ===
 const circleCount = 10;
@@ -63,7 +78,7 @@ for (let i = 0; i < circleCount; i++) {
         y: Math.random() * canvas.height,
         dx: (Math.random() - 0.5) * 3,
         dy: (Math.random() - 0.5) * 3,
-        radius: 20,
+        radius: 50,
         index: i
     });
 }
