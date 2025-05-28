@@ -55,7 +55,7 @@ function loadTexture(gl, url) {
 
 
 // Charge une icône (remplace "icon.png" par ton image)
-const texture = loadTexture(gl, "/assets/icone.jpeg");
+const texture = loadTexture(gl, "assets/icone.jpeg");
 
 
 
