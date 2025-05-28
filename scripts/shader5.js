@@ -82,8 +82,10 @@ const fragmentShaderSource = `
         float dist = length(coord);
         
         if (dist < 1.0) {
-            vec2 uv = coord * 0.5 + 0.5;  // Transforme en coordonnées UV (0 à 1)
-            gl_FragColor = texture2D(u_texture, uv);
+         vec2 uv = coord * 0.5 + 0.5; // Transforme en coordonnées UV (0 à 1)
+uv.y = 1.0 - uv.y; // Inversion verticale
+gl_FragColor = texture2D(u_texture, uv);
+
         } else {
             discard;
         }
