@@ -281,6 +281,13 @@ export function goFullscreen() {
         canvas.msRequestFullscreen();
     }
 }
+function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    gl.viewport(0, 0, canvas.width, canvas.height);
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas(); // au démarrage
 
 
 
