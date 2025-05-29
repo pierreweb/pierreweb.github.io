@@ -101,7 +101,7 @@ function generateGradient(name) {
     case "red": return [ [1,0.4,0.4], [0.6,0,0] ];
     case "pink": return [ [1,0.6,0.9], [0.8,0,0.5] ];
     case "orange": return [ [1,0.7,0.2], [1,0.4,0] ];
-    case "birdofparadise": return [ [0.7,0.3,1], [1,0.5,0.2] ];
+    case "birdofparadise": return [ [0.1,0.1,1], [1,0.1,0.1] ];
     default: return [ [1,1,1], [0.5,0.5,0.5] ];
   }
 }
