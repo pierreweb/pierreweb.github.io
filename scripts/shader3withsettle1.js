@@ -269,3 +269,18 @@ export function toggleFullscreen() {
         document.exitFullscreen();
     }
 }
+export function goFullscreen() {
+    const canvas = document.getElementById("glCanvas");
+    if (canvas.requestFullscreen) {
+        canvas.requestFullscreen();
+    } else if (canvas.webkitRequestFullscreen) {
+        canvas.webkitRequestFullscreen();
+    } else if (canvas.mozRequestFullScreen) {
+        canvas.mozRequestFullScreen();
+    } else if (canvas.msRequestFullscreen) {
+        canvas.msRequestFullscreen();
+    }
+}
+
+
+
