@@ -16,7 +16,7 @@ canvas {
     background: rgba(0, 0, 0, 0.3); /* Fond semi-transparent */
     padding: 10px;
     border-radius: 10px;
-    color: white;
+    color: red;
     font-family: sans-serif;
     z-index: 10;
     width: 200px;
