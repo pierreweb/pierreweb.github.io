@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Shader 3 – Triangles dynamiques</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="css/shader3withsettle.css">
 </head>
 <body>
     <canvas id="glCanvas"></canvas>
