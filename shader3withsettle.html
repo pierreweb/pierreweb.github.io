@@ -67,43 +67,12 @@
         </label>
         <label>
             <!--<button onclick="toggleFullscreen()">Plein écran</button>-->
-            <button onclick="import('./scripts/shader3withsettle_fixed1.js').then(m => m.toggleFullscreen())">Plein écran</button>
+            <button onclick="import('./scripts/shader3withsettle1.js').then(m => m.toggleFullscreen())">Plein écran</button>
 
         </label>
     </div>
     <script type="module" src="./scripts/shader3withsettle1.js"></script>
-    <script>
-const countSlider = document.getElementById('countSlider');
-const sizeSlider = document.getElementById('sizeSlider');
-const rotationSlider = document.getElementById('rotationSlider');
-const colorSelect = document.getElementById('colorSelect');
 
-countSlider.addEventListener('input', () => {
-    setTriangleCount(parseInt(countSlider.value));
-});
-
-sizeSlider.addEventListener('input', () => {
-    setTriangleSize(parseFloat(sizeSlider.value) / 100);
-});
-
-rotationSlider.addEventListener('input', () => {
-    setRotationSpeed(parseFloat(rotationSlider.value));
-});
-
-colorSelect.addEventListener('change', () => {
-    setGradient(colorSelect.value);
-});
-
-export function toggleFullscreen() {
-    const canvas = document.getElementById("glCanvas");
-    if (!document.fullscreenElement) {
-        canvas.requestFullscreen();
-    } else {
-        document.exitFullscreen();
-    }
-}
-
-    </script>
 
 
 </body>
