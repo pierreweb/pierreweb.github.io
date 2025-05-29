@@ -249,7 +249,7 @@ sizeSlider.addEventListener('input', () => {
 });
 
 speedSlider.addEventListener('input', () => {
-    triangleSpeed = parseFloat(speedSlider.value);
+    triangleSpeed = parseFloat(speedSlider.value);console.log(triangleSpeed);
 });
 
 
