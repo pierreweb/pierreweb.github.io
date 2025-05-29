@@ -1,7 +1,9 @@
 const canvas = document.getElementById("glCanvas");
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
-const gl = canvas.getContext("webgl");
+
+const gl = canvas.getContext("webgl2");
+
 
 if (!gl) {
   alert("WebGL non supporté !");
