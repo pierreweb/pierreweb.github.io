@@ -2,42 +2,51 @@ body, html {
     margin: 0;
     padding: 0;
     overflow: hidden;
-    height: 100%;
 }
 
 canvas {
     display: block;
-    width: 100%;
-    height: 100%;
 }
 
-.slider-panel {
-    position: fixed;
-    bottom: 0;
-    right: 0;
-    background: rgba(30, 30, 30, 0.8);
+/* Container toujours présent mais réduit */
+#controls {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    background: rgba(0, 0, 0, 0.8);
     padding: 10px;
+    border-radius: 10px;
     color: white;
-    border-top-left-radius: 10px;
     font-family: sans-serif;
-    font-size: 14px;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    transform: translateY(100%);
     opacity: 0;
-    transition: opacity 0.3s;
     pointer-events: none;
 }
 
-.slider-panel:hover {
+/* Affiche les contrôles au survol de la zone */
+#controls:hover,
+#controls.show {
+    transform: translateY(0);
     opacity: 1;
     pointer-events: auto;
 }
 
-.slider-panel label {
-    display: block;
-    margin-bottom: 6px;
+/* Pour élargir la zone de survol */
+#controls-area {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 150px;
+    height: 150px;
 }
 
-.slider-panel input,
-.slider-panel select {
+/* Sliders */
+#controls label, #controls select {
+    display: block;
+    margin: 5px 0;
+}
+
+#controls input[type="range"] {
     width: 100%;
-    margin-top: 2px;
 }
