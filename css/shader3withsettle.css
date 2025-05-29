@@ -1,52 +1,48 @@
 body, html {
     margin: 0;
     padding: 0;
-    overflow: hidden;color:red;
+    overflow: hidden;
 }
 
 canvas {
     display: block;
 }
 
-/* Container toujours présent mais réduit */
+/* Panneau des contrôles toujours visible avec fond transparent */
 #controls {
     position: absolute;
     bottom: 10px;
     right: 10px;
-    background: rgba(0, 0, 0, 0.8);
+    background: rgba(0, 0, 0, 0.3); /* Fond semi-transparent */
     padding: 10px;
     border-radius: 10px;
     color: white;
     font-family: sans-serif;
-    transition: transform 0.3s ease, opacity 0.3s ease;
-    transform: translateY(100%);
-    opacity: 0;
-    pointer-events: none;
+    z-index: 10;
+    width: 200px;
 }
 
-/* Affiche les contrôles au survol de la zone */
-#controls:hover,
-#controls.show {
-    transform: translateY(0);
-    opacity: 1;
-    pointer-events: auto;
-}
-
-/* Pour élargir la zone de survol */
-#controls-area {
-    position: absolute;
-    bottom: 0;
-    right: 0;
-    width: 150px;
-    height: 150px;
-}
-
-/* Sliders */
+/* Sliders et sélecteurs bien espacés */
 #controls label, #controls select {
     display: block;
-    margin: 5px 0;
+    margin: 8px 0;
 }
 
 #controls input[type="range"] {
     width: 100%;
+}
+
+#fullscreenBtn {
+    margin-top: 10px;
+    width: 100%;
+    padding: 5px;
+    border: none;
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    cursor: pointer;
+}
+
+#fullscreenBtn:hover {
+    background: rgba(255, 255, 255, 0.4);
 }
