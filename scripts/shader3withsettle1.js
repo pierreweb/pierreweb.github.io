@@ -1,6 +1,8 @@
+document.createElement('canvas').getContext('webgl2')
 const canvas = document.getElementById("glCanvas");
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
+
 
 const gl = canvas.getContext("webgl2");
 
