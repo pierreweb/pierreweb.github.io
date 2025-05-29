@@ -12,6 +12,7 @@ if (!gl) {
 
 let triangleCount = 10;
 let triangleSize = 0.05;
+let triangleSpeed = 1.0; // vitesse de déplacement
 let rotationSpeed = 1.0;
 let selectedGradient = "blue";
 
@@ -146,25 +147,30 @@ function initTriangles(count) {
 
 initTriangles(triangleCount);
 
+
+
 function update() {
   for (let i = 0; i < triangleCount; i++) {
-    let x = offsets[i*2];
-    let y = offsets[i*2+1];
-    let dx = directions[i*2];
-    let dy = directions[i*2+1];
+    let x = offsets[i * 2];
+    let y = offsets[i * 2 + 1];
+    let dx = directions[i * 2] * triangleSpeed;
+    let dy = directions[i * 2 + 1] * triangleSpeed;
 
     x += dx;
     y += dy;
 
-    if (x < -1 || x > 1) directions[i*2] *= -1;
-    if (y < -1 || y > 1) directions[i*2+1] *= -1;
+    // Rebonds sur les bords
+    if (x < -1 || x > 1) directions[i * 2] *= -1;
+    if (y < -1 || y > 1) directions[i * 2 + 1] *= -1;
 
-    offsets[i*2] = x;
-    offsets[i*2+1] = y;
+    offsets[i * 2] = x;
+    offsets[i * 2 + 1] = y;
   }
+
   gl.bindBuffer(gl.ARRAY_BUFFER, offsetBuffer);
   gl.bufferSubData(gl.ARRAY_BUFFER, 0, offsets);
 }
+
 
 function render(time) {
   gl.viewport(0, 0, canvas.width, canvas.height);
@@ -230,6 +236,7 @@ window.setRotationSpeed = (speed) => {
 
 const countSlider = document.getElementById('countSlider');
 const sizeSlider = document.getElementById('sizeSlider');
+const speedSlider = document.getElementById('speedSlider');
 const rotationSlider = document.getElementById('rotationSlider');
 const colorSelect = document.getElementById('colorSelect');
 
@@ -240,6 +247,11 @@ countSlider.addEventListener('input', () => {
 sizeSlider.addEventListener('input', () => {
     setTriangleSize(parseFloat(sizeSlider.value) / 100);
 });
+
+speedSlider.addEventListener('input', () => {
+    triangleSpeed = parseFloat(speedSlider.value);
+});
+
 
 rotationSlider.addEventListener('input', () => {
     setRotationSpeed(parseFloat(rotationSlider.value));
