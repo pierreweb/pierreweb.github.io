@@ -1,4 +1,4 @@
-const canvas = document.getElementById("glcanvas");
+const canvas = document.getElementById("glCanvas");
 const gl = canvas.getContext("webgl");
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
