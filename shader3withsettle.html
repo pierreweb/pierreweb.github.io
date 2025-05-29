@@ -1,39 +1,38 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <title>Shader 3 – Triangles dynamiques</title>
-    <link rel="stylesheet" href="css/shader3withsettle.css">
+  <meta charset="UTF-8" />
+  <title>Shader 3 - Triangles avec dégradés</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <canvas id="glCanvas"></canvas>
 
-    <!-- Menu sliders (s'affiche au survol) -->
-  <div id="controls-area">
-    <div id="controls">
-        <label>Nombre de triangles
-            <input type="range" id="triangleCount" min="1" max="1000" value="10">
-        </label>
-        <label>Taille (%)
-            <input type="range" id="triangleSize" min="20" max="160" value="10">
-        </label>
-        <label>Vitesse rotation
-            <input type="range" id="rotationSpeed" min="0" max="10" step="0.1" value="1">
-        </label>
-        <label>Couleur
-            <select id="gradientSelect">
-                <option>Jaune</option>
-                <option>Bleu</option>
-                <option>Vert</option>
-                <option>Rouge</option>
-                <option>Rose</option>
-                <option>Orange</option>
-                <option>Oiseaux de paradis</option>
-            </select>
-        </label>
-        <button id="fullscreenBtn">Plein écran</button>
-    </div>
-</div>
+  <div class="controls">
+    <label>Nombre:
+      <input type="range" id="count" min="1" max="1000" value="10" />
+    </label>
+    <label>Taille (%):
+      <input type="range" id="size" min="40" max="160" value="10" />
+    </label>
+    <label>Vitesse rotation:
+      <input type="range" id="rotation" min="0" max="10" step="0.1" value="1" />
+    </label>
+    <label>Couleur:
+      <select id="gradient">
+        <option value="blue">Gradient Bleu</option>
+        <option value="red">Gradient Rouge</option>
+        <option value="green">Gradient Vert</option>
+        <option value="yellow">Gradient Jaune</option>
+        <option value="pink">Gradient Rose</option>
+        <option value="orange">Gradient Orange</option>
+        <option value="exotic">Oiseaux de Paradis</option>
+      </select>
+    </label>
+    <button id="fullscreen">Plein écran</button>
+  </div>
+
+
 
 
     <script src="scripts/shader3withsettle1.js"></script>
