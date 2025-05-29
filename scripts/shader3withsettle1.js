@@ -225,3 +225,35 @@ window.setGradient = (name) => {
 window.setRotationSpeed = (speed) => {
   rotationSpeed = speed;
 };
+
+// sliders.js (ou à la fin de shader3withsettle_fixed.js si tout est dans un seul fichier)
+
+const countSlider = document.getElementById('countSlider');
+const sizeSlider = document.getElementById('sizeSlider');
+const rotationSlider = document.getElementById('rotationSlider');
+const colorSelect = document.getElementById('colorSelect');
+
+countSlider.addEventListener('input', () => {
+    setTriangleCount(parseInt(countSlider.value));
+});
+
+sizeSlider.addEventListener('input', () => {
+    setTriangleSize(parseFloat(sizeSlider.value) / 100);
+});
+
+rotationSlider.addEventListener('input', () => {
+    setRotationSpeed(parseFloat(rotationSlider.value));
+});
+
+colorSelect.addEventListener('change', () => {
+    setGradient(colorSelect.value);
+});
+
+export function toggleFullscreen() {
+    const canvas = document.getElementById("glCanvas");
+    if (!document.fullscreenElement) {
+        canvas.requestFullscreen();
+    } else {
+        document.exitFullscreen();
+    }
+}
