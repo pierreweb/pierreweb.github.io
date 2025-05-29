@@ -10,8 +10,8 @@ if (!gl) {
   throw new Error("WebGL2 requis");
 }
 
-let triangleCount = 10;
-let triangleSize = 0.05;
+let triangleCount = 20;
+let triangleSize = 0.5;
 let rotationSpeed = 1.0;
 let selectedGradient = "blue";
 
