@@ -1,40 +1,107 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <title>Shader 3 - Triangles avec dégradés</title>
-  <link rel="stylesheet" href="css/shader3withsettle.css" />
+    <meta charset="UTF-8">
+    <title>Shader 3 - Réglages</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: black;
+        }
+
+        #glCanvas {
+            width: 100vw;
+            height: 100vh;
+            display: block;
+        }
+
+        #controls {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            padding: 10px;
+            border-top-left-radius: 12px;
+            font-family: sans-serif;
+        }
+
+        label {
+            display: block;
+            margin-top: 8px;
+        }
+
+        select, input[type="range"] {
+            width: 100%;
+        }
+    </style>
 </head>
 <body>
-  <canvas id="glCanvas"></canvas>
+    <canvas id="glCanvas"></canvas>
+    <div id="controls">
+        <label>
+            Nombre de triangles
+            <input type="range" id="countSlider" min="1" max="1000" value="10">
+        </label>
+        <label>
+            Taille (% écran)
+            <input type="range" id="sizeSlider" min="2" max="40" value="10">
+        </label>
+        <label>
+            Vitesse de rotation
+            <input type="range" id="rotationSlider" min="0" max="10" value="2" step="0.1">
+        </label>
+        <label>
+            Couleur (dégradé)
+            <select id="colorSelect">
+                <option value="yellow">Jaune</option>
+                <option value="blue">Bleu</option>
+                <option value="green">Vert</option>
+                <option value="red">Rouge</option>
+                <option value="pink">Rose</option>
+                <option value="orange">Orange</option>
+                <option value="birdofparadise">Oiseaux de paradis</option>
+            </select>
+        </label>
+        <label>
+            <button onclick="toggleFullscreen()">Plein écran</button>
+        </label>
+    </div>
+    <script type="module" src="./scripts/shader3withsettle_fixed.js"></script>
+    <script>
+        import { setTriangleCount, setTriangleSize, setRotationSpeed, setGradient } from './scripts/shader3withsettle_fixed.js';
 
-  <div class="controls">
-    <label>Nombre:
-      <input type="range" id="count" min="1" max="1000" value="10" />
-    </label>
-    <label>Taille (%):
-      <input type="range" id="size" min="1" max="80" value="10" />
-    </label>
-    <label>Vitesse rotation:
-      <input type="range" id="rotation" min="0" max="10" step="0.1" value="1" />
-    </label>
-    <label>Couleur:
-      <select id="gradient">
-        <option value="blue">Gradient Bleu</option>
-        <option value="red">Gradient Rouge</option>
-        <option value="green">Gradient Vert</option>
-        <option value="yellow">Gradient Jaune</option>
-        <option value="pink">Gradient Rose</option>
-        <option value="orange">Gradient Orange</option>
-        <option value="exotic">Oiseaux de Paradis</option>
-      </select>
-    </label>
-    <button id="fullscreen">Plein écran</button>
-  </div>
+        const countSlider = document.getElementById('countSlider');
+        const sizeSlider = document.getElementById('sizeSlider');
+        const rotationSlider = document.getElementById('rotationSlider');
+        const colorSelect = document.getElementById('colorSelect');
 
+        countSlider.addEventListener('input', () => {
+            setTriangleCount(parseInt(countSlider.value));
+        });
 
+        sizeSlider.addEventListener('input', () => {
+            setTriangleSize(parseFloat(sizeSlider.value) / 100);
+        });
 
+        rotationSlider.addEventListener('input', () => {
+            setRotationSpeed(parseFloat(rotationSlider.value));
+        });
 
-    <script src="scripts/shader3withsettle1.js"></script>
+        colorSelect.addEventListener('change', () => {
+            setGradient(colorSelect.value);
+        });
+
+        function toggleFullscreen() {
+            const canvas = document.getElementById("glCanvas");
+            if (!document.fullscreenElement) {
+                canvas.requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            }
+        }
+    </script>
 </body>
 </html>
