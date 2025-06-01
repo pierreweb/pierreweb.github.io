@@ -475,6 +475,73 @@ function setTriangleColors(name) {
         [1.0, 1.0, 0.2], // Sommet bas gauche (blanc)
         [0.8, 0.5, 0.0], // Sommet bas droit (orange vif)
       ];
+    case "tropicalSunset":
+      return [
+        [34 / 255, 193 / 255, 195 / 255], // sommet haut (cyan)
+        [253 / 255, 187 / 255, 45 / 255], // sommet bas gauche (jaune/orangé)
+        [253 / 255, 187 / 255, 45 / 255], // sommet bas droit (jaune/orangé)
+      ];
+    case "mysticAurora":
+      return [
+        [112 / 255, 246 / 255, 255 / 255], // sommet haut (bleu clair transparent)
+        [221 / 255, 108 / 255, 241 / 255], // sommet bas gauche (rose/violet transparent)
+        [123 / 255, 183 / 255, 253 / 255], // sommet bas droit (bleu intense)
+      ];
+    case "sunsetGlow":
+      return [
+        [1, 0.5, 0], // Sommet haut (orange vif)
+        [1, 0.2, 0.2], // Sommet bas gauche (rouge clair)
+        [1, 0.8, 0.2], // Sommet bas droit (jaune clair)
+      ];
+    case "oceanBreeze":
+      return [
+        [0.2, 0.6, 1], // Sommet haut (bleu clair)
+        [0.1, 0.3, 0.8], // Sommet bas gauche (bleu foncé)
+        [0.5, 0.8, 1], // Sommet bas droit (blanc)
+      ];
+    case "cottonCandySky":
+      return [
+        [252 / 255, 225 / 255, 208 / 255], // sommet haut (beige/rosé)
+        [255 / 255, 173 / 255, 214 / 255], // sommet bas gauche (rose pastel)
+        [162 / 255, 186 / 255, 245 / 255], // sommet bas droit (bleu pastel)
+      ];
+    case "forestWhisper":
+      return [
+        [0.2, 0.8, 0.2], // Sommet haut (vert clair)
+        [0.1, 0.4, 0.1], // Sommet bas gauche (vert foncé)
+        [0.5, 0.7, 0.5], // Sommet bas droit (blanc)
+      ];
+    case "lavenderFields":
+      return [
+        [0.8, 0.6, 1], // Sommet haut (lavande)
+        [0.6, 0.4, 0.8], // Sommet bas gauche (lavande foncé)
+        [0.9, 0.7, 1], // Sommet bas droit (blanc)
+      ];
+    case "goldenHour":
+      return [
+        [1, 0.8, 0.2], // Sommet haut (or)
+        [0.8, 0.5, 0.1], // Sommet bas gauche (or foncé)
+        [1, 0.9, 0.5], // Sommet bas droit (blanc)
+      ];
+    case "crimsonTwilight":
+      return [
+        [0.8, 0.1, 0.1], // Sommet haut (cramoisi)
+        [0.5, 0.1, 0.1], // Sommet bas gauche (cramoisi foncé)
+        [1, 0.5, 0.5], // Sommet bas droit (blanc)
+      ];
+    case "emeraldDream":
+      return [
+        [0.2, 0.8, 0.6], // Sommet haut (vert émeraude)
+        [0.1, 0.4, 0.3], // Sommet bas gauche (vert foncé)
+        [0.5, 0.7, 0.5], // Sommet bas droit (blanc)
+      ];
+    case "fieryPassion":
+      return [
+        [1, 0.2, 0.2], // Sommet haut (rouge vif)
+        [0.8, 0.1, 0.1], // Sommet bas gauche (rouge foncé)
+        [1, 0.6, 0.6], // Sommet bas droit (blanc)
+      ];
+
     default:
       return [
         [1, 1, 1], // Sommet haut (blanc)

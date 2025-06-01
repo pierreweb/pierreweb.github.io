@@ -71,6 +71,25 @@ La carte graphique (GPU) est spécialisée pour faire des calculs massivement pa
 ✅ Ils sont ultra rapides (calcul parallèle sur des milliers de cœurs).
 ✅ Ils permettent de créer des effets impossibles à faire uniquement sur le CPU.
 ✅ Ils sont hautement personnalisables (effets dynamiques en temps réel).
+
+🎮 Les shaders dans Unity 3D et Unreal Engine
+
+Dans les moteurs de jeu comme Unity 3D et Unreal Engine, tu peux créer des shaders :
+
+    Soit en écrivant directement le code GLSL/HLSL (méthode traditionnelle).
+
+    Soit en utilisant des outils visuels appelés Node-Based Shader Editors ou Graph Editors.
+
+Ces éditeurs fonctionnent avec une interface visuelle sous forme de nœuds (ou « blocs ») que tu relies par des liens pour définir le flux de données (couleur, texture, transformations, etc.).
+
+Exemples :
+
+    Dans Unity, on utilise le Shader Graph.
+
+    Dans Unreal Engine, c’est le Material Editor.
+
+Ces outils sont parfaits pour créer des effets visuels impressionnants, même sans écrire de code !
+
 ✍️ En résumé
 
     Un shader est un programme qui tourne sur la carte graphique.
@@ -83,7 +102,11 @@ La carte graphique (GPU) est spécialisée pour faire des calculs massivement pa
 
     Texture : image utilisée par les shaders, pas un shader en soi.
 
+    Les shaders sont essentiels pour donner vie à tes modèles 3D en temps réel.
+    Avec un éditeur de type Node-Based Shader Editor, tu peux expérimenter facilement et obtenir rapidement des rendus visuels spectaculaires !
+
     Pourquoi ? Pour des visuels rapides et époustouflants, grâce à la puissance du GPU !
+
 
     liens utiles:
     WebGL Tutorial - Hello, Triangle! https://youtu.be/y2UsQB3WSvo
