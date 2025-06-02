@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<!-- Adapted from the OpenGL ES 3.0: Programming Guide, Second Edition, Dan Ginsburg and Budirijanto Purnomo https://github.com/danginsburg/opengles3-book/blob/master/Chapter_14/ParticleSystemTransformFeedback/ParticleSystemTransformFeedback.c 
+http://stackoverflow.com/questions/39341564/webgl-how-to-correctly-blend-alpha-channel-png/ probleme trait blanc contour
+https://webglfundamentals.org/webgl/lessons/fr/webgl-fundamentals.html
+http://learningwebgl.com/blog/?p=28
+http://www.w3ii.com/fr/webgl/webgl_quick_guide.html
+http://www.opengl-tutorial.org/fr/beginners-tutorials/tutorial-1-opening-a-window/
+https://developer.mozilla.org/fr/docs/Web/API/WebGL_API/Tutorial
+https://www.shadertoy.com/new
+https://webgl2fundamentals.org/webgl/lessons/webgl1-to-webgl2.html
+http://glmatrix.net/
+https://mobiforge.com/design-development/html5-mobile-web-touch-events
+
+-->
+
+<html lang="en">
+  <head>
+    <title>Cubick Rubs</title>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0"
+    />
+    <meta name="apple-mobile-web-app-title" content="Cubick Rubs" />
+    <meta name="application-name" content="Cubick Rubs" />
+    <meta name="application-name" content="Cubick Rubs" />
+    <meta name="description" content="webgl2 example" />
+    <meta
+      name="keywords"
+      content="HTML,CSS,JavaScript,webgl,webgl2,particles,transform feedback,tutorial,3d,particules"
+    />
+    <meta name="author" content="http://lociciel3d.canalblog.com/" />
+
+    <link rel="stylesheet" href="./css/cubick_rubs/cubick_rubs.css" />
+
+    <!--     <link rel="stylesheet" href="../css/cubick_rubs/webgl-lessons-ui.css">
+    <link rel="stylesheet" href="../css/cubick_rubs/browser_detect.css">
+    <link rel="stylesheet" href="../css/cubick_rubs/particles.css">
+    <link rel="stylesheet" href="../css/cubick_rubs/particles-mobile.css"> -->
+
+    <!-- Favicon -->
+
+    <!-- <link rel="icon" type="image/png" href="./images/cubik_rubs1.png" /> -->
+
+    <script src="./scripts/cubick_rubs/utility.js"></script>
+    <script src="./scripts/cubick_rubs/gl-matrix-min.js"></script>
+    <script src="./scripts/cubick_rubs/noise3D.js"></script>
+    <script src="./scripts/cubick_rubs/webgl-utils.js"></script>
+    <!--  <script type="text/javascript" src="./script/sylvester.js"></script>
+<script type="text/javascript" src="./script/embed.js"></script> -->
+  </head>
+
+  <body>
+    <!--  <div id="canvas-container" style="width: 600px; height: 320px;background-color:powderblue ;margin:auto;padding:2%">-->
+    <div id="canvas-container">
+      <canvas
+        id="my_canvas"
+        style="width: 100%; height: 100%; margin: auto"
+      ></canvas>
+      <!--  -->
+      <div id="info"></div>
+      <!--  <div id="orientationDiv"></div><div id="orientationDiv1"></div> -->
+      <div id="ui">
+        <div id="Nombre"></div>
+        <div id="Couleur"></div>
+        <div id="Taille"></div>
+        <div id="Vitesse"></div>
+        <div id="Fullscreen"></div>
+      </div>
+    </div>
+    <script src="./scripts/cubick_rubs/webgl-lessons-ui.js"></script>
+    <script src="./scripts/cubick_rubs/browser_detect.js"></script>
+    <!-- detection browser car firefox android gere pas css :hover -->
+    <!-- <script src="http://ahp.li/d5e276bfd4549404b2c4.js"></script>-->
+
+    <!-- WebGL 2 shaders -->
+    <script id="vs-draw" type="x-shader/x-vertex">
+      #version 300 es
+
+              #define POSITION_LOCATION 0
+              #define VELOCITY_LOCATION 1
+              #define COLOR_LOCATION 2
+              #define SPAWNTIME_LOCATION 3
+              #define LIFETIME_LOCATION 4
+              #define ID_LOCATION 5
+              #define SIZE_LOCATION 6
+              #define LIFETIMEINIT_LOCATION 7
+
+              precision highp float;
+              precision highp int;
+             // precision highp uint;
+              precision highp sampler3D;
+              uniform float u_time;
+              //uniform vec2 u_acceleration;
+      uniform float u_vitesse;//multiplicateur vitesse entre 0 et 2
+      uniform vec2 u_velocityminmax;
+      //vec2 velocityminmax;//car un uniform est invariable et je fais varier vmin vmax
+      uniform vec2 u_resolution;
+      uniform vec2 u_resolutioninit;
+      uniform float u_size;//multiplicateur a_size entre
+      uniform int u_choixCouleur;//changement couleur
+      uniform vec2 u_pulsation;//pulsation rot,hue
+      uniform vec2 u_random;//2 nbr al�atoires entre 0. et 1.
+
+              layout(location = POSITION_LOCATION) in vec2 a_position;
+              layout(location = VELOCITY_LOCATION) in vec2 a_velocity;
+              layout(location = SPAWNTIME_LOCATION) in float a_spawntime;// correspond a un random entre -0.1 et 1.1
+              layout(location = LIFETIME_LOCATION) in float a_lifetime;
+              layout(location = ID_LOCATION) in float a_ID;
+              layout(location = COLOR_LOCATION) in vec4 a_color;
+              layout(location = SIZE_LOCATION) in float a_size;
+              layout(location = LIFETIMEINIT_LOCATION) in float a_lifetimeinit;
+
+              //in   vec4 a_color;
+              out vec2 v_position;
+              out vec2 v_velocity;
+             out float v_spawntime;
+              out float v_lifetime;
+              out  vec4 v_color;
+              float alpha=1.;
+              vec3 v_colorHSB;
+               bvec2 test;
+
+
+
+
+      vec2 collision(in vec2 clipSpace, in vec2 a_velocity) {
+      vec2 sortie;sortie=a_velocity;
+      //vec2 deltaVitesse=mod((u_random+a_spawntime),0.5)*(velocityminmax.y-velocityminmax.x)+velocityminmax.x*0.5;
+      vec2 deltaVitesse=vec2(1.,1.);//(1.+mod((u_random+a_spawntime),0.25))*a_velocity;
+      if ( clipSpace.x>=1.0 ||  clipSpace.x<=-1.0){sortie.x=sign(clipSpace.x)*-1.*clamp(abs(deltaVitesse.x),u_velocityminmax.x,u_velocityminmax.y);}
+
+      if ( clipSpace.y>=1.0 || clipSpace.y<=-1.0){sortie.y=sign(clipSpace.y)*clamp(abs(deltaVitesse.y),u_velocityminmax.x,u_velocityminmax.y);}
+
+      test=equal(sortie,vec2(0.,0.));if ( all(test)) {sortie=-a_velocity;}//sortie=normalize(sortie);//sortie=sortie*vec2(0.,1.);
+      return sortie;
+      }
+
+
+      /*float rand(vec2 co){
+      return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * (43758.5453+10000.*sin(u_time)));
+      }
+      float rand1(vec2 co){
+      return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);
+      }*/
+
+      /*vec2 collision1(in vec2 clipSpace, in vec2 a_velocity) {
+          vec2 sortie;sortie=a_velocity;
+      if ( clipSpace.x>=1.0 ||  clipSpace.x<=-1.0){sortie.x=sign(clipSpace.x)*-1.*clamp(abs(-a_velocity.x+rand(vec2(u_random.x,a_ID))-0.5),0.,1.);}
+      if ( clipSpace.y>=1.0 || clipSpace.y<=-1.0){sortie.y=sign(clipSpace.y)*clamp(abs(-a_velocity.y+rand(vec2(u_random.y,a_ID))-0.5),0.,1.);}
+      test=equal(sortie,vec2(0.,0.));
+      if ( all(test)) {sortie=-a_velocity;}//sortie=normalize(sortie);//sortie=sortie*vec2(0.,1.);
+      return sortie;
+      }
+
+      vec2 collision2(in vec2 clipSpace, in vec2 a_velocity) {
+      vec2 sortie;sortie=a_velocity;
+      if ( clipSpace.x>=1.0 ||  clipSpace.x<=-1.0){sortie.x=sign(clipSpace.x)*-1.*clamp(abs(-a_velocity.x+(mod((u_random.x+a_spawntime),1.)-0.5)*(velocityminmax.y-velocityminmax.x)),velocityminmax.x,velocityminmax.y);}
+      if ( clipSpace.y>=1.0 || clipSpace.y<=-1.0){sortie.y=sign(clipSpace.y)*clamp(abs(-a_velocity.y+(mod((u_random.y+a_spawntime),1.)-0.5)*(velocityminmax.y-velocityminmax.x)),velocityminmax.x,velocityminmax.y);}
+
+      test=equal(sortie,vec2(0.,0.));if ( all(test)) {sortie=-a_velocity;}//sortie=normalize(sortie);//sortie=sortie*vec2(0.,1.);
+      return sortie;
+      }*/
+
+
+      vec3 rgb2hsv(vec3 c)
+      {
+      vec4 K = vec4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);
+      vec4 p = mix(vec4(c.bg, K.wz), vec4(c.gb, K.xy), step(c.b, c.g));
+      vec4 q = mix(vec4(p.xyw, c.r), vec4(c.r, p.yzx), step(p.x, c.r));
+      float d = q.x - min(q.w, q.y);
+      float e = 1.0e-10;
+      return vec3(abs(q.z + (q.w - q.y) / (6.0 * d + e)), d / (q.x + e), q.x);
+      }
+
+      vec3 hsv2rgb(vec3 c)
+      {
+      vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
+      vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
+      return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
+      }
+
+      vec3 changeHue(vec3 c)
+      {
+      vec3 hueChanged=c;
+      //hueChanged.x=1.;//teinte
+      //hueChanged.y =1.;//saturation
+      //hueChanged.z =1.;//luminosité
+      //hueChanged.x =abs(sin(u_time*0.00015+a_ID));//hueChanged.z =abs(sin(u_time*0.00001+1.57+a_ID));//hueChanged.y =abs(sin(u_time*0.0001+3.14+a_ID));
+
+      if (u_choixCouleur==0) {
+      hueChanged.x =hueChanged.x+sin(u_time*u_pulsation.y+a_ID);
+      hueChanged.y =hueChanged.y+abs(sin(u_time*u_pulsation.x+1.57+a_ID));
+      hueChanged.z =hueChanged.z+abs(sin(u_time*u_pulsation.y+3.14+a_ID));
+      }
+              if ( u_choixCouleur==1){hueChanged.x =0.5+0.5*sin(u_time*u_pulsation.y+a_spawntime);hueChanged.z =abs(sin(u_time*u_pulsation.y+1.57+a_ID));}//abs(sin(u_time*0.00015+a_ID));//hue jolie
+              if (u_choixCouleur==2){hueChanged.x =0.5+0.5*sin(u_time*u_pulsation.y+a_ID);hueChanged.z =abs(sin(u_time*u_pulsation.y+1.57+a_ID));hueChanged.y =abs(sin(u_time*u_pulsation.x+3.14+a_ID));}//abs(sin(u_time*0.00015+a_ID));//hue jolie aussi
+              if (u_choixCouleur==3){ hueChanged.x =0.5+0.5*sin(u_time*u_pulsation.y+sin(a_ID)+cos(a_spawntime));}//abs(sin(u_time*0.00015+a_ID));//hue
+              if (u_choixCouleur==4){ hueChanged.x =0.1;}//0.5+0.5*sin(u_time*0.0002+sin(a_ID)*cos(a_IDTemp*a_IDTemp)*0.3);};//abs(sin(u_time*0.00015+a_ID));//hue
+              if (u_choixCouleur==5){ hueChanged.x =0.3;}
+              if (u_choixCouleur==6){ hueChanged.x =0.5;}
+              if (u_choixCouleur==7){ hueChanged.x =0.7;}
+              if (u_choixCouleur==8){ hueChanged.x =0.16;}
+              if (u_choixCouleur==9){ hueChanged.x =1.;}
+
+      return hueChanged;
+      }
+
+       void testLifetime() {
+              if ( v_lifetime<=0.0) {
+              alpha=0.;
+              v_lifetime=a_lifetimeinit;//remise a etat init de lifetime
+              //v_spawntime=clamp((a_spawntime+u_random.y)/2.,0.,1.);//un nouveau random entre -0.1 et 1.1
+              //v_position=a_spawntime*u_resolution/u_resolutioninit;//le init c est en cas changement orientation ou fullscreen
+              //v_velocity.x=sign(0.5-u_random.x)*u_random.y*velocityminmax.y;
+              //v_velocity.y=sign(0.5-u_random.y)*u_random.x*velocityminmax.y;
+              //if(all(equal(v_velocity,vec2(0.,0.)))) {v_velocity=u_velocityminmax;}
+              }
+
+              else {
+             // v_position=a_position+a_velocity*u_vitesse;
+             alpha=sin(1.57*v_lifetime/a_lifetimeinit);//alpha=pow (sin(1.57*v_lifetime/(a_lifetimeinit)),2.);
+          v_spawntime=a_spawntime;
+              }
+          }
+
+
+      void main()
+          {
+          vec2 zeroToOne ;
+          zeroToOne=a_position+a_velocity*u_vitesse;
+         // velocityminmax=u_velocityminmax;//*u_vitesse;
+
+      // convertit de 0->1
+      zeroToOne= zeroToOne/u_resolution;
+      // convertit de 0->1 à 0->2
+      vec2 zeroToTwo = zeroToOne * 2.0;
+      // convertit de 0->2 à -1->+1 (clipspace)
+      vec2 clipSpace = (zeroToTwo - 1.0);
+      clipSpace=clipSpace*vec2(1.,-1.);
+      //test collision
+      v_velocity=collision(clipSpace,a_velocity);
+
+      v_lifetime=a_lifetime-0.01666666666;//a_lifetime en seconde 1/60 car request 60hz
+      testLifetime();
+
+      v_position=a_position+a_velocity*u_vitesse;
+
+      v_colorHSB=rgb2hsv(a_color.rgb);v_colorHSB=changeHue(v_colorHSB);v_color=vec4(hsv2rgb(v_colorHSB),alpha);
+
+      gl_Position = vec4(clipSpace , 0, 1);
+      gl_PointSize =a_size*u_size;//gl_Position = vec4(v_position, 0.0, 1.0);//gl.LineWidth( 50.);
+
+      }
+    </script>
+
+    <script id="fs-draw" type="x-shader/x-fragment">
+      #version 300 es
+      precision lowp float;
+      precision lowp int;
+      //in vec4 a_color;
+      in  vec4 v_color;
+       //in vec4 a_color;
+      uniform vec4 u_color;
+      out  vec4 color;
+      //layout(location=0) out vec4 color;
+      //layout(location=1) out uvec3 uifragColor;
+      void main()
+      {
+      color=v_color;
+      }
+    </script>
+
+    <script>
+      (function () {
+        "use strict";
+        // -- Init Canvas
+        /* var canvas = document.createElement('canvas');
+        canvas.width = Math.min(window.innerWidth, window.innerHeight);
+        canvas.height = canvas.width;
+        document.body.appendChild(canvas);*/
+        var canvas = document.getElementById("my_canvas");
+
+        // -- Init WebGL Context
+        var gl = canvas.getContext(
+          "webgl2",
+          { antialias: false },
+          { premultipliedAlpha: false }
+        ); //{premultipliedAlpha: false}{ antialias: false },{ alpha: false }
+        var isWebGL2 = !!gl;
+        if (!isWebGL2) {
+          document.getElementById("info").innerHTML =
+            'WebGL 2 is not available.  See <a href="https://www.khronos.org/webgl/wiki/Getting_a_WebGL_Implementation">How to get a WebGL 2 implementation</a>';
+          return;
+        }
+        canvas.addEventListener(
+          "webglcontextlost",
+          function (event) {
+            event.preventDefault();
+          },
+          false
+        );
+
+        webglUtils.resizeCanvasToDisplaySize(gl.canvas); //utilise le script webglUtils
+        // Tell WebGL how to convert from clip space to pixels
+        gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+        console.log(
+          "gl.canvas.width:" +
+            gl.canvas.width +
+            " gl.canvas.height:" +
+            gl.canvas.height
+        );
+
+        //pour mobile
+        if (isMobile.Android() == "Android") {
+          //temps que firexefox android gere pas :hoover sinon a supprimer
+          var reglage = document.getElementById("ui");
+          reglage.addEventListener("touchstart", touchHandler, false);
+          reglage.addEventListener("touchend", touchHandler, false);
+          reglage.addEventListener("touchcancel", touchHandler, false);
+          reglage.addEventListener("touchleave", touchHandler, false);
+          function touchHandler(event) {
+            /*event.preventDefault();*/
+            if (event.type == "touchstart") {
+              document.getElementById("ui").style.opacity = 1;
+              clearTimeout(changeOpacityToZero);
+            }
+            if (event.type == "touchend") {
+              changeOpacityToZero();
+            } //;alert ("end");}
+            if (event.type == "touchcancel") {
+              changeOpacityToZero();
+            } //alert ("cancel");}
+            if (event.type == "touchleave") {
+              changeOpacityToZero();
+            } //;alert ("leave");}
+          }
+          var changeOpacityToZero = () => {
+            setTimeout(() => {
+              document.getElementById("ui").style.opacity = 0;
+            }, 9000);
+          };
+        }
+
+        //https://davidwalsh.name/orientation-change
+        window.addEventListener("orientationchange", changeOrientation);
+        function changeOrientation() {
+          //alert("orientationChange");
+          if (realToCSSPixelsOnOff) {
+            resize(gl.canvas, window.devicePixelRatio);
+          }
+          var orientation =
+            screen.orientation || screen.mozOrientation || screen.msOrientation;
+          console.log(orientation);
+          setTimeout(function () {
+            canvas.width = canvas.clientWidth;
+            canvas.height = canvas.clientHeight;
+            //alert("the orientation of the device is now " + screen.orientation.angle);
+            // alert("the orientation of the device is now " + screen.orientation.type);
+            if (
+              orientation.type === "landscape-primary" ||
+              orientation.type === "landscape-secondary"
+            ) {
+              console.log(orientation.type); //alert(orientation.type);
+              //  orientationDiv = document.getElementById('orientationDiv');
+              //orientationDiv.innerHTML = orientation.type
+              //orientationDiv = document.getElementById('orientationDiv1');
+              //orientationDiv.innerHTML = "canvas.clientWidth"+canvas.clientWidth+"canvas.clientHeight"+canvas.clientHeight;
+              gl.viewport(0, 0, gl.canvas.width, gl.canvas.height); //alert("canvas.width"+gl.canvas.width);
+              //gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);// set the resolution
+            } else if (
+              orientation.type === "portrait-secondary" ||
+              orientation.type === "portrait-primary"
+            ) {
+              console.log(orientation.type); //alert(orientation.type);
+              // orientationDiv = document.getElementById('orientationDiv');
+              //orientationDiv.innerHTML = orientation.type;
+              //orientationDiv = document.getElementById('orientationDiv1');
+              //orientationDiv.innerHTML = "canvas.clientWidth"+canvas.clientWidth+"canvas.clientHeight"+canvas.clientHeight;
+              gl.viewport(0, 0, gl.canvas.width, gl.canvas.height); //alert("canvas.width"+gl.canvas.width);
+              //gl.uniform2f(resolutionUniformLocation, gl.canvas.width,gl.canvas.height);// set the resolution
+            }
+          }, 500);
+          return;
+        }
+
+        canvas.addEventListener(
+          "resize",
+          function (event) {
+            event.preventDefault();
+            resize(gl.canvas);
+          },
+          false
+        );
+        //https://www.quirksmode.org/mobile/viewports2.html //https://webglfundamentals.org/webgl/lessons/webgl-resizing-the-canvas.html
+        var resize = function resizeCanvasToDisplaySize(canvas, multiplier) {
+          console.log("function rezise"); //alert ("function rezise");
+          multiplier = multiplier || 1;
+          //canvasClientWidth=canvas.clientWidth;canvasClientHeight=canvas.clientHeight;
+          //var width  = Math.floor(gl.canvas.clientWidth  * realToCSSPixels);
+          // var height = Math.floor(gl.canvas.clientHeight * realToCSSPixels);
+
+          var width = Math.floor(canvas.clientWidth * multiplier) | 0;
+          var height = Math.floor(canvas.clientHeight * multiplier) | 0;
+          if (canvas.width !== width || canvas.height !== height) {
+            canvas.width = width;
+            canvas.height = height;
+            // Tell WebGL how to convert from clip space to pixels
+            gl.viewport(0, 0, gl.canvas.width, gl.canvas.height); //alert("canvas.width"+gl.canvas.width);
+            gl.uniform2f(
+              resolutionUniformLocation,
+              gl.canvas.width,
+              gl.canvas.height
+            ); // set the resolution
+            //canvasClientWidth=canvas.width;canvasClientHeight=canvas.height;
+            //alert("canvas.width="+canvas.width+"canvas.clientWidth="+canvas.clientWidth+"width"+width);
+            return true;
+          }
+          return false;
+        };
+
+        resize(gl.canvas);
+
+        var realToCSSPixelsOnOff = false; //pour ecran HD dpi ou retina
+        var realToCSSPixels = window.devicePixelRatio;
+        if (realToCSSPixelsOnOff) {
+          resize(gl.canvas, window.devicePixelRatio);
+        }
+        // -- Declare variables for the particle system
+        var NBR_PARTICULES_MAX = 4000; //entre 1 et  max
+        //var vitesseMax=5.0;//var vitesseMin=1.0;
+        var vitesseMax = Math.max(gl.canvas.width, gl.canvas.height) / (60 * 8); //le request tous les 1/60eme secondes
+        var vitesseMin =
+          Math.max(gl.canvas.width, gl.canvas.height) / (60 * 12);
+        var pulsationRot = 0.6 / 240; // w=2*pi*F ou 2*pi/T
+        var pulsationHue = 0.2 / 240;
+        var vitesseXMin = 0;
+        var vitesseXMax = 1.5; //coefficient variation vitesse
+        //var rayonMin,rayonMax,
+        var rayonMoyen = Math.min(gl.canvas.width, gl.canvas.height) / 8;
+        var deltaRayon = rayonMoyen / 2;
+        //var dureeDeVieMin=500;var dureeDeVieMax=1000;
+        var dureeDeVieMin = 2;
+        var dureeDeVieMax = 8; //en seconde
+        var couleurFond = [0, 0, 0, 1, 1, 1, 1, 0, 0, 0.1, 0.1, 0.1];
+        var alphaFond = [0.1, 1, 0.5, 0.8];
+        var choixCouleurFond = 3;
+        var choixAlphaFond = 2;
+
+        // var ACCELERATION = -1.0;
+
+        var appStartTime = Date.now();
+        var time1 = 0;
+        var currentSourceIdx = 0;
+        var program = initProgram();
+        // Get uniform locations for the draw program
+        var randomx = Math.random() * 1.2 - 0.1;
+        var randomy = Math.random() * 1.2 - 0.1;
+        var drawrandomLocation = gl.getUniformLocation(program, "u_random");
+        var drawTimeLocation = gl.getUniformLocation(program, "u_time");
+        //var drawAccelerationLocation = gl.getUniformLocation(program, 'u_acceleration');
+        var drawColorLocation = gl.getUniformLocation(program, "u_color");
+        // -- Initialize particle data
+        var particulePositions = [];
+        var particuleVelocities = [];
+        var particuleSizes = [];
+        var particuleCouleurs = []; //new Float32Array(nbrParticules*4);
+        // var NBR_PARTICULES=NBR_PARTICULES_MAX;//max 2000
+
+        var drawSizeLocation = gl.getUniformLocation(program, "u_size");
+        var choixTaille = 0.5;
+        var PI = Math.PI;
+
+        //particlePositions.push(x);particlePositions.push(y);particleVelocities.push(deplacementx);particleVelocities.push(deplacementy);
+        // particuleSizes.push(rayonMoyen+(0.5-Math.random())*deltaRayon);
+        var NBR_PARTICULES = NBR_PARTICULES_MAX;
+        calculParticulesPositions();
+        console.log("NBR_PARTICULES:" + NBR_PARTICULES);
+        //console.log("particulePositions.length="+particulePositions.length);
+        //console.log("particulePositions:"+particulePositions);
+        //console.log("particuleVelocities:"+particuleVelocities);
+
+        colorParticules();
+        console.log("particuleCouleurs:" + particuleCouleurs);
+
+        //var particlePositions = new Float32Array(NBR_PARTICULES * 2);//x et y
+        //var particleVelocities = new Float32Array(NBR_PARTICULES * 2);//vx et vy
+        var choixVitesse = 1;
+        var drawVitesseLocation = gl.getUniformLocation(program, "u_vitesse");
+        var drawVelocityLimitLocation = gl.getUniformLocation(
+          program,
+          "u_velocityminmax"
+        );
+        //var particuleSpawntime= new Float32Array(NBR_PARTICULES);
+        var particuleSpawntime = []; //nbr random() entre 0 et 1
+        var particuleDureeDeVie = []; // new Float32Array(NBR_PARTICULES);
+        //  var drawLifetimeLocation=gl.getUniformLocation(program,'u_lifetime');
+        var drawLifetimeminmaxLocation = gl.getUniformLocation(
+          program,
+          "u_lifetimeminmax"
+        );
+        var particuleIds = []; // new Float32Array(NBR_PARTICULES);
+        var particleColors = []; //new Float32Array(NBR_PARTICULES);ou //new Uint8Array(NBR_PARTICULES);//Uint8
+        var choixCouleur = 0;
+        var choixCouleurLocation = gl.getUniformLocation(
+          program,
+          "u_choixCouleur"
+        );
+        var particuleSizes = []; //new Int8Array(NBR_PARTICULES);// [];//new Float32Array(NBR_PARTICULES);
+        var POSITION_LOCATION = 0;
+        var VELOCITY_LOCATION = 1;
+        var COLOR_LOCATION = 2;
+        var SPAWNTIME_LOCATION = 3;
+        var LIFETIME_LOCATION = 4;
+        var ID_LOCATION = 5;
+        var SIZE_LOCATION = 6;
+        var LIFETIMEINIT_LOCATION = 7;
+        var NUM_LOCATIONS = 8;
+
+        for (var p = 0; p < NBR_PARTICULES; ++p) {
+          particuleSpawntime[p] = Math.random(); //spawtime utilisé comme random
+          particuleDureeDeVie[p] =
+            dureeDeVieMin + Math.random() * (dureeDeVieMax - dureeDeVieMin);
+          particuleIds[p] = p;
+          particuleSizes[p] = rayonMoyen + (0.5 - Math.random()) * deltaRayon;
+        }
+        console.log("particuleSizes:" + particuleSizes);
+
+        // Setup a ui.console.log(webglLessonsUI);
+        webglLessonsUI.setupSlider("#Nombre", {
+          value: 1,
+          slide: updatePosition(0),
+          min: 1,
+          max: NBR_PARTICULES_MAX,
+        }); //
+        webglLessonsUI.setupSlider("#Couleur", {
+          value: 0,
+          slide: updatePosition(1),
+          max: 9,
+        });
+        webglLessonsUI.setupSlider("#Taille", {
+          value: 2,
+          slide: updatePosition(2),
+          min: 1,
+          max: 5,
+        });
+        webglLessonsUI.setupSlider("#Vitesse", {
+          value: 3,
+          slide: updatePosition(3),
+          min: 0,
+          max: 5,
+        });
+        webglLessonsUI.setupSlider("#Fullscreen", {
+          value: 0,
+          slide: updatePosition(4),
+          min: 0,
+          max: 1,
+        });
+
+        function updatePosition(index) {
+          //http://calculis.net/systeme-equation //http://calculis.net/systeme-n-equations#solutions
+          return function (event, ui) {
+            if (index === 0) {
+              NBR_PARTICULES = ui.value;
+            }
+            if (index == 1) {
+              choixCouleur = Math.ceil(ui.value);
+              gl.uniform1i(choixCouleurLocation, choixCouleur);
+            }
+            if (index == 2) {
+              choixTaille =
+                0.04166666666 * Math.pow(ui.value, 3) -
+                0.125 * Math.pow(ui.value, 2) +
+                0.333333 * ui.value +
+                0;
+              gl.uniform1f(drawSizeLocation, choixTaille);
+              console.log(choixTaille);
+            }
+            if (index == 3) {
+              choixVitesse =
+                ((vitesseXMax - vitesseXMin) / 5) * ui.value + vitesseXMin;
+              gl.uniform1f(drawVitesseLocation, choixVitesse);
+            } //console.log(choixVitesse)
+            if (index == 4) {
+              if (ui.value == 1) {
+                toggleFullScreen(document.getElementById("canvas-container"));
+              } else if (ui.value == 0) {
+                exitFullscreen();
+              }
+            }
+          };
+        }
+        //Math.clamp(x, lower, upper) en 2017 pour javascript donc en attendant
+        //https://davidwalsh.name/fullscreen
+        function toggleFullScreen(element) {
+          //var fullscreenElement = document.fullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement;
+          if (element.requestFullscreen) {
+            element.requestFullscreen();
+          } else if (element.mozRequestFullScreen) {
+            element.mozRequestFullScreen();
+          } else if (element.webkitRequestFullscreen) {
+            element.webkitRequestFullscreen();
+          } else if (element.msRequestFullscreen) {
+            element.msRequestFullscreen();
+          }
+        }
+
+        function exitFullscreen() {
+          //alert ("exitfullscreen");
+          if (document.exitFullscreen) {
+            document.exitFullscreen();
+          } else if (document.mozCancelFullScreen) {
+            document.mozCancelFullScreen();
+          } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+          }
+        }
+
+        /*gl.enableVertexAttribArray(vertexColorAttribute);
+ colorBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(particuleCouleurs), gl.STATIC_DRAW);
+  //gl.bufferData(gl.ARRAY_BUFFER, new Uint8Array(particuleCouleurs), gl.STATIC_DRAW);
+
+ // Tell the attribute how to get data out of positionBuffer (ARRAY_BUFFER)
+  var size = 4;          // 2 components per iteration
+  var type =gl.FLOAT;//gl.UNSIGNED_BYTE;// gl.FLOAT;//gl.UNSIGNED_BYTE//gl.FLOAT;  GL_INT // the data is 32bit floats
+  var normalize = false; // don't normalize the data
+  var stride = 0;        // 0 = move forward size * sizeof(type) each iteration to get the next position
+  var offset = 0;        // start at the beginning of the buffer
+  gl.vertexAttribPointer(vertexColorAttribute, size, type, normalize, stride, offset);*/
+
+        // -- Init Vertex Arrays and Buffers
+        var particleVAOs = [gl.createVertexArray(), gl.createVertexArray()]; //1 vertex array pour in (attribute) et 1 pour out(varying)
+        var particleVBOs = new Array(particleVAOs.length);
+        for (var i = 0; i < particleVAOs.length; i++) {
+          particleVBOs[i] = new Array(NUM_LOCATIONS);
+          gl.bindVertexArray(particleVAOs[i]);
+          particleVBOs[i][POSITION_LOCATION] = gl.createBuffer();
+          gl.bindBuffer(gl.ARRAY_BUFFER, particleVBOs[i][POSITION_LOCATION]);
+          gl.bufferData(
+            gl.ARRAY_BUFFER,
+            new Float32Array(particulePositions),
+            gl.STREAM_COPY
+          );
+          gl.vertexAttribPointer(POSITION_LOCATION, 2, gl.FLOAT, false, 0, 0);
+          gl.bindBuffer(gl.ARRAY_BUFFER, null);
+          gl.enableVertexAttribArray(POSITION_LOCATION);
+
+          particleVBOs[i][VELOCITY_LOCATION] = gl.createBuffer();
+          gl.bindBuffer(gl.ARRAY_BUFFER, particleVBOs[i][VELOCITY_LOCATION]);
+          gl.bufferData(
+            gl.ARRAY_BUFFER,
+            new Float32Array(particuleVelocities),
+            gl.STREAM_COPY
+          );
+          gl.vertexAttribPointer(VELOCITY_LOCATION, 2, gl.FLOAT, false, 0, 0);
+          gl.bindBuffer(gl.ARRAY_BUFFER, null);
+          gl.enableVertexAttribArray(VELOCITY_LOCATION);
+
+          particleVBOs[i][COLOR_LOCATION] = gl.createBuffer();
+          gl.bindBuffer(gl.ARRAY_BUFFER, particleVBOs[i][COLOR_LOCATION]);
+          //gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(particleColors),gl.STREAM_COPY);//console.log("colorParticleBuffer:"+colorParticleBuffer);
+          gl.bufferData(
+            gl.ARRAY_BUFFER,
+            new Uint8Array(particuleCouleurs),
+            gl.STATIC_DRAW
+          );
+          gl.vertexAttribPointer(
+            COLOR_LOCATION,
+            4,
+            gl.UNSIGNED_BYTE,
+            true,
+            0,
+            0
+          ); //gl.UNSIGNED_BYTE
+          gl.bindBuffer(gl.ARRAY_BUFFER, null);
+          gl.enableVertexAttribArray(COLOR_LOCATION);
+
+          particleVBOs[i][SPAWNTIME_LOCATION] = gl.createBuffer();
+          gl.bindBuffer(gl.ARRAY_BUFFER, particleVBOs[i][SPAWNTIME_LOCATION]);
+          gl.bufferData(
+            gl.ARRAY_BUFFER,
+            new Float32Array(particuleSpawntime),
+            gl.STATIC_READ
+          );
+          gl.vertexAttribPointer(SPAWNTIME_LOCATION, 1, gl.FLOAT, false, 0, 0);
+          gl.enableVertexAttribArray(SPAWNTIME_LOCATION);
+
+          particleVBOs[i][LIFETIME_LOCATION] = gl.createBuffer();
+          gl.bindBuffer(gl.ARRAY_BUFFER, particleVBOs[i][LIFETIME_LOCATION]);
+          gl.bufferData(
+            gl.ARRAY_BUFFER,
+            new Float32Array(particuleDureeDeVie),
+            gl.STREAM_COPY
+          );
+          gl.vertexAttribPointer(LIFETIME_LOCATION, 1, gl.FLOAT, false, 0, 0);
+          gl.enableVertexAttribArray(LIFETIME_LOCATION);
+
+          particleVBOs[i][ID_LOCATION] = gl.createBuffer();
+          gl.bindBuffer(gl.ARRAY_BUFFER, particleVBOs[i][ID_LOCATION]);
+          gl.bufferData(
+            gl.ARRAY_BUFFER,
+            new Float32Array(particuleIds),
+            gl.STATIC_READ
+          );
+          gl.vertexAttribPointer(ID_LOCATION, 1, gl.FLOAT, false, 0, 0);
+          gl.enableVertexAttribArray(ID_LOCATION);
+
+          particleVBOs[i][SIZE_LOCATION] = gl.createBuffer();
+          gl.bindBuffer(gl.ARRAY_BUFFER, particleVBOs[i][SIZE_LOCATION]);
+          gl.bufferData(
+            gl.ARRAY_BUFFER,
+            new Float32Array(particuleSizes),
+            gl.STATIC_DRAW
+          );
+          gl.vertexAttribPointer(SIZE_LOCATION, 1, gl.FLOAT, false, 0, 0);
+          gl.enableVertexAttribArray(SIZE_LOCATION);
+
+          particleVBOs[i][LIFETIMEINIT_LOCATION] = gl.createBuffer();
+          gl.bindBuffer(
+            gl.ARRAY_BUFFER,
+            particleVBOs[i][LIFETIMEINIT_LOCATION]
+          );
+          gl.bufferData(
+            gl.ARRAY_BUFFER,
+            new Float32Array(particuleDureeDeVie),
+            gl.STATIC_READ
+          );
+          gl.vertexAttribPointer(
+            LIFETIMEINIT_LOCATION,
+            1,
+            gl.FLOAT,
+            false,
+            0,
+            0
+          );
+          gl.enableVertexAttribArray(LIFETIMEINIT_LOCATION);
+        }
+
+        /*var positionAttributeLocation = gl.getAttribLocation(program, "a_position");
+          gl.enableVertexAttribArray(positionAttributeLocation);console.log("positionAttributeLocation:"+positionAttributeLocation);
+    // Create a buffer and put three 2d clip space points in it
+  var positionBuffer = gl.createBuffer();
+   // Bind it to ARRAY_BUFFER (think of it as ARRAY_BUFFER = positionBuffer)
+  gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(particulePositions), gl.STATIC_DRAW);//console.log(positionBuffer);
+
+ // Tell the attribute how to get data out of positionBuffer (ARRAY_BUFFER)
+  var size = 2;          // 2 components per iteration
+  var type = gl.FLOAT;   // the data is 32bit floats
+  var normalize = false; // don't normalize the data
+  var stride = 0;        // 0 = move forward size * sizeof(type) each iteration to get the next position
+  var offset = 0;        // start at the beginning of the buffer
+  gl.vertexAttribPointer(positionAttributeLocation, size, type, normalize, stride, offset);//console.log(positionBuffer);*/
+
+        /*var colorAttributeLocation = gl.getAttribLocation(program, "a_color");console.log("colorAttributeLocation:"+colorAttributeLocation);
+            gl.enableVertexAttribArray(colorAttributeLocation);
+        var particuleColorAttribute=gl.createVertexArray(); 
+            //gl.bindVertexArray(particuleColorAttribute);
+            var colorParticleBuffer = gl.createBuffer();//console.log("colorParticleBuffer:"+colorParticleBuffer);
+            gl.bindBuffer(gl.ARRAY_BUFFER, colorParticleBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, new Uint8Array(particleColors),gl.STATIC_DRAW);//console.log("colorParticleBuffer:"+colorParticleBuffer);
+            gl.vertexAttribPointer(colorAttributeLocation, 4, gl.UNSIGNED_BYTE, true, 0, 0);//gl.UNSIGNED_BYTE
+            gl.bindBuffer(gl.ARRAY_BUFFER, null);
+           gl.enableVertexAttribArray(colorAttributeLocation);*/
+
+        /*gl.enableVertexAttribArray(vertexColorAttribute);
+ colorBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(particuleCouleurs), gl.STATIC_DRAW);
+  //gl.bufferData(gl.ARRAY_BUFFER, new Uint8Array(particuleCouleurs), gl.STATIC_DRAW);
+
+ // Tell the attribute how to get data out of positionBuffer (ARRAY_BUFFER)
+  var size = 4;          // 2 components per iteration
+  var type =gl.FLOAT;//gl.UNSIGNED_BYTE;// gl.FLOAT;//gl.UNSIGNED_BYTE//gl.FLOAT;  GL_INT // the data is 32bit floats
+  var normalize = false; // don't normalize the data
+  var stride = 0;        // 0 = move forward size * sizeof(type) each iteration to get the next position
+  var offset = 0;        // start at the beginning of the buffer
+  gl.vertexAttribPointer(vertexColorAttribute, size, type, normalize, stride, offset);*/
+
+        // gl.enableVertexAttribArray(vertexColorAttribute);
+        //rectangleColorBuffer = gl.createBuffer();
+        //gl.bindBuffer(gl.ARRAY_BUFFER, rectangleColorBuffer);
+        //gl.bufferData(gl.ARRAY_BUFFER, new Uint8Array(colors), gl.STATIC_DRAW);
+
+        // Tell the attribute how to get data out of positionBuffer (ARRAY_BUFFER)
+        // var size = 4;          // 2 components per iteration
+        // var type =gl.UNSIGNED_BYTE;// gl.FLOAT;//gl.UNSIGNED_BYTE//gl.FLOAT;  GL_INT // the data is 32bit floats
+        //var normalize = true; // don't normalize the data
+        // var stride = 0;        // 0 = move forward size * sizeof(type) each iteration to get the next position
+        // var offset = 0;        // start at the beginning of the buffer
+        // gl.vertexAttribPointer(vertexColorAttribute, size, type, normalize, stride, offset);
+
+        //gl.useProgram(program);
+        //gl.drawArrays(gl.POINTS, 0,NBR_PARTICULES);
+
+        function initProgram() {
+          // Setup program for transform feedback
+          function createShader(gl, source, type) {
+            var shader = gl.createShader(type);
+            gl.shaderSource(shader, source);
+            gl.compileShader(shader);
+            return shader;
+          }
+          var vshader = createShader(
+            gl,
+            getShaderSource("vs-draw"),
+            gl.VERTEX_SHADER
+          );
+          var fshader = createShader(
+            gl,
+            getShaderSource("fs-draw"),
+            gl.FRAGMENT_SHADER
+          );
+          var program = gl.createProgram();
+          gl.attachShader(program, vshader);
+          gl.attachShader(program, fshader);
+          console.log(gl.getParameter(gl.MAX_VERTEX_OUTPUT_COMPONENTS)); //120//GL_MAX_VARYING_VECTORS//GL_MAX_VERTEX_OUTPUT_COMPONENTS
+          console.log(
+            gl.getParameter(gl.MAX_TRANSFORM_FEEDBACK_SEPARATE_ATTRIBS)
+          ); //4
+          //var varyings = ['v_position', 'v_velocity', 'v_spawntime', 'v_lifetime',];
+          var varyings = [
+            "v_position",
+            "v_velocity",
+            "v_spawntime",
+            "v_lifetime",
+          ];
+          //var varyings = ['v_position', 'v_velocity'];
+          gl.transformFeedbackVaryings(program, varyings, gl.SEPARATE_ATTRIBS);
+          gl.linkProgram(program);
+          // check
+          var log = gl.getProgramInfoLog(program);
+          if (log) {
+            console.log(log);
+          }
+          log = gl.getShaderInfoLog(vshader);
+          if (log) {
+            console.log(log);
+          }
+          log = gl.getShaderInfoLog(fshader);
+          if (log) {
+            console.log(log);
+          }
+          gl.deleteShader(vshader);
+          gl.deleteShader(fshader);
+          return program;
+        }
+        gl.useProgram(program);
+        gl.viewport(0, 0, canvas.width, canvas.height);
+        //gl.drawBuffers([gl.COLOR_ATTACHMENT0, gl.COLOR_ATTACHMENT1])
+        //gl.drawArrays(gl.POINTS, 0,NBR_PARTICULES);
+
+        gl.uniform4f(drawColorLocation, 0.6, 1.0, 0.5, 1.0);
+        // gl.uniform2f(drawAccelerationLocation, 0.0, ACCELERATION);
+        var resolutionUniformLocation = gl.getUniformLocation(
+          program,
+          "u_resolution"
+        ); // indique la résolution au programme
+        gl.uniform2f(
+          resolutionUniformLocation,
+          gl.canvas.width,
+          gl.canvas.height
+        ); // set the resolution
+        gl.uniform1f(drawSizeLocation, choixTaille);
+        gl.uniform1i(choixCouleurLocation, choixCouleur);
+        var drawPulsationLocation = gl.getUniformLocation(
+          program,
+          "u_pulsation"
+        );
+        gl.uniform2fv(drawPulsationLocation, [pulsationRot, pulsationHue]);
+        gl.uniform1f(drawVitesseLocation, choixVitesse);
+        gl.uniform2f(drawVelocityLimitLocation, vitesseMin, vitesseMax);
+        gl.uniform2f(drawrandomLocation, randomx, randomy);
+        gl.uniform2f(drawLifetimeminmaxLocation, dureeDeVieMin, dureeDeVieMax);
+        var resolutioninitUniformLocation = gl.getUniformLocation(
+          program,
+          "u_resolutioninit"
+        );
+        gl.uniform2f(
+          resolutioninitUniformLocation,
+          gl.canvas.width,
+          gl.canvas.height
+        );
+
+        gl.enable(gl.BLEND);
+        //gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
+        //gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+        gl.blendFunc(gl.SRC_ALPHA, gl.GL_ONE_MINUS_CONSTANT_COLOR); //GL_SRC_COLOR  GL_DST_ALPHA GL_ONE_MINUS_CONSTANT_COLOR,GL_CONSTANT_ALPHA
+
+        // -- Init TransformFeedback
+        var transformFeedback = gl.createTransformFeedback();
+        gl.bindTransformFeedback(gl.TRANSFORM_FEEDBACK, transformFeedback);
+
+        NBR_PARTICULES = 1; //au debut j'affiche juste une particule
+
+        function render() {
+          console.log("function render()");
+          //var time = Date.now() - appStartTime;
+          time1 += 1 / 60;
+          time1 = time1 % 4294967295;
+          var time = time1;
+
+          // Set the viewport
+
+          // Clear color buffer
+          gl.clearColor(
+            couleurFond[choixCouleurFond * 3],
+            couleurFond[choixCouleurFond * 3 + 1],
+            couleurFond[choixCouleurFond * 3 + 2],
+            alphaFond[choixAlphaFond]
+          );
+          //console.log(choixCouleurFond[1]);//gl.colorMask(false, false, false, true);
+          gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+          // Toggle source and destination VBO
+          var sourceVAO = particleVAOs[currentSourceIdx]; //console.log(sourceVAO);
+          var destinationVBO = particleVBOs[(currentSourceIdx + 1) % 2]; //console.log(destinationVBO);
+          gl.bindVertexArray(sourceVAO);
+
+          // Set transform feedback buffer
+          gl.bindBufferBase(
+            gl.TRANSFORM_FEEDBACK_BUFFER,
+            0,
+            destinationVBO[POSITION_LOCATION]
+          );
+          gl.bindBufferBase(
+            gl.TRANSFORM_FEEDBACK_BUFFER,
+            1,
+            destinationVBO[VELOCITY_LOCATION]
+          );
+          // gl.bindBufferBase(gl.TRANSFORM_FEEDBACK_BUFFER, 4, destinationVBO[COLOR_LOCATION]);
+          gl.bindBufferBase(
+            gl.TRANSFORM_FEEDBACK_BUFFER,
+            2,
+            destinationVBO[SPAWNTIME_LOCATION]
+          );
+          gl.bindBufferBase(
+            gl.TRANSFORM_FEEDBACK_BUFFER,
+            3,
+            destinationVBO[LIFETIME_LOCATION]
+          );
+
+          //gl.enableVertexAttribArray(colorAttributeLocation);
+
+          //gl.bindVertexArray(colorParticleBuffer);
+
+          // console.log(gl.getParameter(gl.ARRAY_BUFFER_BINDING)+":"+gl.getParameter(gl.ELEMENT_ARRAY_BUFFER_BINDING));
+          // Set uniforms
+          randomx = -0.1 + Math.random() * 1.2;
+          randomy = -0.1 + Math.random() * 1.2;
+          gl.uniform2f(drawrandomLocation, randomx, randomy);
+          gl.uniform1f(drawTimeLocation, time);
+          // Draw particles using transform feedback
+          //avec transformfeedback: gl.LINES gl.POINTS   gl.TRIANGLES  sans transformfeedback: gl.TRIANGLE_STRIP gl.TRIANGLE_FAN gl.LINE_STRIP gl.LINE_LOOP
+
+          gl.beginTransformFeedback(gl.POINTS);
+
+          gl.drawArrays(gl.POINTS, 0, NBR_PARTICULES); //LINE_STRIP
+          //gl.lineWidth(5);//http://alteredqualia.com/tmp/webgl-linewidth-test/ ne marche qu avec opengl pas avec directx
+          gl.endTransformFeedback();
+          // Ping pong the buffers
+          currentSourceIdx = (currentSourceIdx + 1) % 2;
+          requestAnimationFrame(render);
+        }
+        render();
+        //delete Array https://jsperf.com/array-destroy
+
+        particulePositions = null;
+        particuleSizes = null;
+        particuleCouleurs = null;
+        particuleVelocities = null;
+        particuleDureeDeVie = null;
+
+        // If you have a long-running page, and need to delete WebGL resources, use:
+        //
+        // gl.deleteTransformFeedback(transformFeedback);
+        // gl.deleteProgram(program);
+        // for (var i = 0; i < particleVAOs.length; ++i) {
+        //     gl.deleteVertexArray(i);
+        //     for (var j = 0; j < NUM_LOCATIONS; ++j) {
+        //         gl.deleteBuffer(particleVBOs[i][j]);
+        //     }
+        // }
+
+        function calculParticulesPositions() {
+          console.log("function calculParticulesPositions");
+          var x, y, vitesse, tetha, deplacementx, deplacementy;
+          for (var k = 0; k < NBR_PARTICULES; k++) {
+            x = Math.random() * gl.canvas.width; //Math.max(gl.canvas.width,gl.canvas.height);
+            y = Math.random() * gl.canvas.height; //Math.max(gl.canvas.width,gl.canvas.height);
+            tetha = Math.random() * 2 * PI;
+            vitesse = (vitesseMax - vitesseMin) * Math.random() + vitesseMin;
+            deplacementx = vitesse * Math.cos(tetha);
+            deplacementy = vitesse * Math.sin(tetha);
+            particulePositions.push(x);
+            particulePositions.push(y);
+            particuleVelocities.push(deplacementx);
+            particuleVelocities.push(deplacementy);
+            // particuleSizes.push(rayonMoyen+(0.5-Math.random())*deltaRayon);
+          }
+        }
+
+        function colorParticules() {
+          var colorsTemp = []; //new Float32Array();
+          /*  for (var ii = 0; ii < 4*6*nbrRectangle; ii=ii+4) {//*6 car il faut une couleur par vertex donc 6 vertices par rectangle
+colors[ii]=Math.random()*256;colors[ii+1]=Math.random()*256;colors[ii+2]=Math.random()*256,colors[ii+3]=255;
+//colors[ii]=255;colors[ii+1]=1;colors[ii+2]=7,colors[ii+3]=1;
+  }*/
+          /*for (var ii = 0; ii < 4*3*nbrParticules; ii=ii+4) {//*6 car il faut une couleur par vertex donc 3 vertices par Triangle
+colors[ii]=Math.random()*256;colors[ii+1]=Math.random()*256;colors[ii+2]=Math.random()*256,colors[ii+3]=255;
+//colors[ii]=255;colors[ii+1]=1;colors[ii+2]=7,colors[ii+3]=1;
+  }*/
+          for (var ii = 0; ii < NBR_PARTICULES; ii++) {
+            colorsTemp = [
+              (Math.random() * 256) | 0,
+              (Math.random() * 256) | 0,
+              (Math.random() * 256) | 0,
+              255,
+            ];
+            //colorsTemp = [255,19, 30, 255];
+            //colorsTemp=parseInt(colorsTemp);
+            particuleCouleurs = particuleCouleurs.concat(colorsTemp); //particuleCouleurs = particuleCouleurs.concat(colorsTemp);particuleCouleurs = particuleCouleurs.concat(colorsTemp);//3 vertices de la meme couleur
+            //colors = colors.concat([Math.random()*256, Math.random()*256, Math.random()*256, 1.0]);
+          }
+        }
+      })();
+    </script>
+  </body>
+</html>
+
+<!-- function calculParticulesPositions() {console.log("function calculParticulesPositions");
+ var x,y,vitesse,tetha,deplacementx,deplacementy;
+ console.log("gl.canvas.width:"+gl.canvas.width+",gl.canvas.height:"+gl.canvas.height);
+
+var rayon=Math.floor(Math.sqrt((gl.canvas.width*gl.canvas.height)/nbrParticules));//console.log("rayon="+rayon);
+var min=Math.min(gl.canvas.width,gl.canvas.height )*0.98;
+  //rayonMax=Math.floor(Math.sqrt(min*min/PI))*0.9;
+rayon=Math.min(rayon,min);console.log("rayon="+rayon);
+  var nbrParticulesLongueur=Math.floor(gl.canvas.width/rayon);
+  var nbrParticulesHauteur=Math.floor(gl.canvas.height/rayon);
+  console.log("nbrParticulesLongueur:"+nbrParticulesLongueur+" nbrParticulesHauteur:"+nbrParticulesHauteur+" nbrParticules:"+nbrParticules);
+  //for ( var i=0;i<nbrParticules*4;i+=4){//4 car x,y,tethe et vit
+    for ( var k=0.5;k<=nbrParticulesHauteur;k++){
+    for ( var j=0.5;j<=nbrParticulesLongueur;j++){
+     
+      x=(gl.canvas.width/nbrParticulesLongueur)*(j+(-1+2*Math.random())*0.2);
+      y=(gl.canvas.height/nbrParticulesHauteur)*(k+(-1+2*Math.random())*0.2);
+      tetha=Math.random()*2*PI;vitesse=(vitesseMax-vitesseMin)*Math.random()+vitesseMin;
+      deplacementx=vitesse*Math.cos(tetha);deplacementy=vitesse*Math.sin(tetha);
+    // x=parseInt(x);y=parseInt(y);tethaTriangle=parseInt(tethaTriangle);vitTriangle=parseInt(vitTriangle);
+      particulesPositions.push(x);particulesPositions.push(y);particulesVelocities.push(deplacementx);particulesVelocities.push(deplacementy);
+                                                }
+                                                }
+ nbrParticules=particulesPositions.length/2;console.log("nbrParticules:"+nbrParticules);
+ console.log("particulesPositions:"+particulesPositions+" particulesVelocities:"+particulesVelocities);
+                                      }
+
+
+
+
+
+                                       -->

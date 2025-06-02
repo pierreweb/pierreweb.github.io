@@ -1,0 +1,317 @@
+/*
+https://developer.mozilla.org/fr/docs/Web/CSS/Disposition_des_bo%C3%AEtes_flexibles_CSS/Utilisation_des_flexbox_en_CSS
+https://openclassrooms.com/courses/apprenez-a-creer-votre-site-web-avec-html5-et-css3/la-mise-en-page-avec-flexbox
+https://demo.agektmr.com/flexbox/
+https://css-tricks.com/styling-cross-browser-compatible-range-inputs-css/
+css grid et flex box https://youtu.be/jV8B24rSN5o
+https://youtu.be/HgwCeNVPlo0
+*/
+
+/*html {
+  /*box-sizing: border-box;*/
+
+/**, *:before, *:after {
+  box-sizing: inherit;
+  user-select: none;
+  pointer-events: auto;
+}
+}*/
+
+body {
+  background-color: #000000;
+  font-family: Sans-Serif;
+  margin: auto;
+}
+
+#canvas-container {
+  width: 100vw;
+  height: 100vh;
+  border: none;
+  display: block;
+  background-color: #000000;
+  overflow: hidden;
+  user-select: none;
+}
+
+#my_canvas {
+  background-color: #444;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+#ui {
+  /*background-color: #00f000;*/
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  width: 300px;
+  display: -webkit-flex;
+  -webkit-flex-direction: column;
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  flex-flow: column nowrap;
+  justify-content: space-around;
+  align-items: stretch;
+  align-content: stretch;
+  font-family: monospace;
+  text-shadow: -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff,
+    1px 1px 0 #fff;
+  opacity: 0;
+  /*pointer-events:none;*/
+  /* HOVER OFF */
+  /*-webkit-transition: opacity 5s;-moz-transition: opacity 5s;-o-transition: opacity 5s;
+transition:opacity 5s;
+transition-timing-function:cubic-bezier(1,1,0.95,0);/*transition-timing-function: ease-in;*/
+}
+
+#ui:hover {
+  opacity: 1;
+  pointer-events: none;
+  /*-webkit-transition: opacity 0.1s;-moz-transition: opacity 0.1s;-o-transition: opacity 0.1s;
+transition:opacity 0.1s;
+transition-timing-function:step-end;*/
+}
+
+#ui > div {
+  /*background-color: #00f000;*/
+  pointer-events: none;
+
+  align-self: auto;
+  flex: 1 1 auto;
+  min-width: 100%;
+  min-height: 12%; /*car 5 reglages 5*15=75%*/
+
+  display: flex; /*joue sur gman outer*/
+  justify-content: stretch;
+  align-content: center;
+  align-items: center;
+}
+
+#ui input {
+  /*background-color: #444;*/
+  pointer-events: auto;
+  min-height: 98%;
+}
+#ui select,
+#ui option {
+  /*background-color: #ff0000;opacity:0;*/
+  pointer-events: auto;
+  min-height: 98%;
+}
+
+.gman-slider-label,
+.gman-widget-label,
+.gman-checkbox-label {
+  /*texte � gauche*/
+  /*background-color: #000077;*/
+  order: 1;
+  flex: 2 1 auto;
+  min-width: 25%; /*10em;*/
+  min-height: 100%;
+  align-self: stretch;
+  /*font-size:1em;*/
+  display: flex; /*pour centrer texte verti et hori*/
+  justify-content: flex-end;
+  align-content: center;
+  align-items: stretch;
+  margin: auto;
+  text-align: right;
+}
+.gman-checkbox-label {
+  pointer-events: auto; /*background-color: #000077;*/
+}
+
+.gman-widget-value {
+  /*boite du texte a droite*/
+  /*background-color: #000077;*/
+  order: 3;
+  flex: 1 1 auto;
+  min-width: 10%; /*10em;*/
+  min-height: 100%;
+  align-self: stretch;
+
+  display: flex; /*centrage du texte*/
+  justify-content: stretch;
+  align-content: center;
+  align-items: auto;
+  margin: auto;
+  text-align: left;
+  /*min-width: 3em;*/
+}
+
+.gman-slider-upper {
+  height: 1.5em;
+}
+
+.gman-slider-outer,
+.gman-widget-outer {
+  /*background-color: #070000;*/
+  width: 100%; /* 1.7em;*/
+  height: 100%;
+  min-height: 100%;
+
+  display: flex;
+  flex-direction: row; /*joue sur gman label slider et value*/
+  justify-content: space-between;
+  align-content: center;
+  align-items: center;
+  /*pointer-events: auto;*/
+  -webkit-user-select: none; /* Chrome, Opera, Safari */
+  -moz-user-select: none; /* Firefox 2+ */
+  -ms-user-select: none; /* IE 10+ */
+  user-select: none; /* Standard syntax */
+}
+
+.gman-widget-slider,
+.gman-widget-checkbox,
+.gman-widget-select {
+  opacity: 1;
+  background: transparent;
+  border-style: none; /*important pour firefoxmobile background-color: #a00fff;*/
+  font-size: medium;
+  margin-left: 0.3em;
+  margin-right: 0.3em;
+}
+
+.gman-widget-select {
+  font-size: small;
+}
+.gman-widget-slider {
+  /*curseur au milieu*/
+  /*background-color: #770000;opacity:0;*/
+  order: 2;
+  flex: 2 1 auto;
+  min-width: 40%; /*10em;*/
+  min-height: 10%;
+  align-self: center;
+  display: flex;
+  /*margin:auto;*/
+  align-content: center;
+  align-items: center;
+}
+
+/* styles to apply if in an iframe */
+
+html.iframe {
+  height: 100%;
+  width: 100%;
+}
+body.iframe {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+.iframe > .description {
+  display: none;
+}
+.iframe .divcanvas {
+  width: 100vw;
+  height: 100vh;
+}
+.iframe my_canvas {
+  width: 100vw;
+  height: 100vh;
+}
+
+.iframe > #example {
+  width: 100%;
+  height: 100%;
+}
+#ui #rotation > my_canvas {
+  background-color: rgba(255, 0, 255, 0.6);
+}
+
+.console {
+  font-family: monospace;
+  max-height: 50%;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  overflow: auto;
+  background: #ddd;
+}
+.console > div {
+  white-space: pre-wrap;
+  border-top: 1px solid black;
+  padding-left: 0.2em;
+  padding-right: 0.2em;
+}
+.console > .error {
+  background: red;
+  color: white;
+}
+
+.contextlost {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100vw;
+  height: 100vh;
+  position: absolute;
+  left: 0;
+  top: 0;
+  background-color: rgba(0, 0, 0, 0.8);
+  color: white;
+  z-index: 10000;
+}
+.contextlost > div {
+  padding: 1em;
+  border-radius: 0.5em;
+  background: red;
+  color: white;
+}
+
+@media only screen and (min-device-width: 320px) and (max-device-width: 800px) {
+  pre {
+    font-size: xx-small; /*!important;*/
+    max-width: 300px; /*!important;*/
+    max-width: 80vw;
+  }
+
+  my_canvas {
+    width: 100vw;
+    height: 100vh;
+  }
+
+  .iframe my_canvas {
+    width: 100vw;
+    height: 100vh;
+    border: none;
+  }
+
+  #ui {
+    /*background-color:#0000f0;opacity:0.1;*/
+    top: 5px;
+    left: 0px;
+    width: 100%;
+    height: 100%;
+    top: 50%;
+    left: 50%; /*� 50%/50% du parent r�f�rent*/
+    transform: translate(-50%, -50%); /*d�calage de 50% de sa propre taille */
+
+    align-items: center;
+    align-content: center;
+
+    /*display: -webkit-flex;-webkit-flex-direction: column;
+display: flex;flex-direction: column;
+justify-content: space-around;
+align-items:space-around;
+align-content:space-around;
+HOVER OFF*/
+
+    /*opacity:0;
+-webkit-transition: opacity 1s;-moz-transition: opacity 1s;-o-transition: opacity 1s;
+transition:opacity 1s;
+transition-timing-function:cubic-bezier(1,1,0.95,0);/*ease-in*/
+  }
+  /*pour le moment :hover fonctionne pas avec firefox android donc j'utilise javascript*/
+  #ui > div:hover {
+    background-color: #990009;
+    opacity: 1;
+  }
+}
