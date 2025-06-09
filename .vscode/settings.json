@@ -1,3 +1,31 @@
 {
   "liveServer.settings.donotShowInfoMsg": true
+
+  "files.exclude": {
+    "shader1.html": true,
+    "shader2.html": true,
+    "shader3.html": true,
+    "shader4.html": true,
+    "shader5.html": true,
+    "shader6.html": true,
+    "shader7.html": true,
+    "cubick_rubs.html": true,
+    "shaderpingpong.html": true,
+    "README": true,
+    "README*": true,
+
+    "scripts/shader1.js": true,
+     "scripts/shader2.js": true,
+      "scripts/shader3.js": true,
+       "scripts/shader4.js": true,
+        "scripts/shader5.js": true,
+         "scripts/shader6.js": true,
+          "scripts/shader7.js": true,
+    "scripts/shaderpingpong/": true,
+    "scripts/cubick_rubs": true,
+    "assets": true,
+    "css": true,
+    "effacable": true,
+    "fonctionnebien": true
+  }
 }

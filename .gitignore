@@ -1,3 +1,5 @@
 
 effacable/
 # Ignore the effable directory
+effacablewebgpu/
+# Ignore the effablewebgpu directory
