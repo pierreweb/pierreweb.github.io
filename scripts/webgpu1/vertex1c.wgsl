@@ -13,7 +13,8 @@ var<uniform> u_aspect: f32;
 
 struct VertexOutput {
   @builtin(position) position: vec4<f32>,
-    @location(0) size: f32,
+    @location(1) size: f32,
+      @location(0) uv: vec2<f32>,
 };
 
 @vertex
@@ -21,6 +22,7 @@ struct VertexOutput {
 
 fn main(
   @location(0) position: vec2<f32>,
+
   //  @builtin(vertex_index) vertexIndex: u32,
   @builtin(instance_index) index: u32
 ) -> VertexOutput {
@@ -38,6 +40,8 @@ fn main(
   var output: VertexOutput;
   output.position = vec4<f32>(scaledPos + aspectCorrectedPos, 0.0, 1.0);
   output.size=particle.size;
+ 
+  output.uv = position;   // Les UV centrés
 
   return output;
 }

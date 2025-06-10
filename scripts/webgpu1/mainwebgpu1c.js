@@ -115,7 +115,7 @@ async function init() {
   particleColor = "red"; // ✅ Couleur rouge par défaut
   particlesColors =
     particleColor === "red"
-      ? new Float32Array([1.0, 0.0, 0.0, 1.0]) // ✅ Rouge
+      ? new Float32Array([1.0, 0.6, 0.6, 1.0]) // ✅ Rouge
       : new Float32Array([0.0, 1.0, 0.0, 1.0]); // ✅ Valeur par défaut (vert)
 
   colorBuffer = device.createBuffer({
@@ -311,7 +311,7 @@ async function render() {
     colorAttachments: [
       {
         view: textureView,
-        clearValue: { r: 0.61, g: 0, b: 0, a: 1 },
+        clearValue: { r: 0.1, g: 0.1, b: 0.15, a: 1 },
         loadOp: "clear",
         storeOp: "store",
       },
