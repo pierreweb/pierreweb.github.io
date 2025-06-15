@@ -17,8 +17,6 @@ struct VertexOutput {
 };
 
 @vertex
-
-
 fn main(
   @location(0) position: vec2<f32>,
   //  @builtin(vertex_index) vertexIndex: u32,
@@ -27,7 +25,7 @@ fn main(
   let particle = particlesDatas[index];
 
   // Ajuste aspect ratio
-  let aspectCorrectedPos = vec2<f32>(particle.pos.x * u_aspect, particle.pos.y);
+ // let aspectCorrectedPos = vec2<f32>(particle.pos.x * u_aspect, particle.pos.y);
 
   // Échelle du cercle modèle
   let scaledPos = position * particle.size;

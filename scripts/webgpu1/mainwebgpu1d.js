@@ -1,12 +1,14 @@
 let canvas, adapter, device, context, format;
-let computePipeline, renderPipeline;
+let computePipeline, computePipeline1, computePipeline2, renderPipeline;
 let particlesBuffer,
   colorBuffer,
-  uniformBuffer,
+  uniformBuffer, //u_aspect
+  uniformBuffer1, //particlesCount
   indexBuffer,
   indexData,
   vertexBuffer,
   vertices,
+  circleResolution,
   circleVertices,
   vertexCount,
   circleVertexCount;
@@ -16,8 +18,8 @@ let aspectRatio;
 let particlesCount,
   particleSize, //valeurs moyenne µ
   particleSpeed, //valeur moyenne µ
-  particleColor;
-let particlesPositions,
+  particleColor,
+  particlesPositions,
   particlesSizes,
   particlesSpeeds,
   particlesColors,
@@ -25,12 +27,12 @@ let particlesPositions,
 //je laisse les sliders à valeur par defaut entre 0 et 100 step 1 et je regle ici
 const particlesCountMin = 2;
 const particlesCountMax = 1000;
-const particlesSpeedMin = 0.0005;
-const particlesSpeedMax = 0.002;
-const ecartTypeSpeed = 0.0005; // √variance
+const particlesSpeedMin = 0.00005;
+const particlesSpeedMax = 0.0005;
+const ecartTypeSpeed = 0.0; // √variance
 const particlesSizeMin = 0.01;
-const particlesSizeMax = 0.1;
-const ecartTypeSize = 0.001; // √variance
+const particlesSizeMax = 0.3;
+const ecartTypeSize = 0.0; // √variance
 
 document.addEventListener("DOMContentLoaded", () => {
   init();
@@ -66,24 +68,20 @@ async function init() {
     "color:",
     particleColor
   ); */
-
-  /*   particlesCount = 12; // ✅ Pour teste 
-  particleSpeed = 0.0;
-  particleSize = 0.05; */
-
+  particlesCount = generateParticlesCount(particlesCount);
+  console.log("particlesCount", particlesCount);
   particlesPositions = new Float32Array(particlesCount * 2); // 2 coordonnées (x, y) par particle
   particlesPositions = generateParticlesUniquePositions(particlesCount, 0.1);
-  console.log("particlesPositions", particlesPositions); // ✅ Vérification
+  //console.log("particlesPositions", particlesPositions); // ✅ Vérification
   // Génération des vitesses des particles
   particlesSpeeds = new Float32Array(particlesCount * 2); // 2 coordonnées (vx, vy) par particle
-  particlesSpeeds = generateParticlesSpeed(particleSpeed);
+  particlesSpeeds = generateParticlesSpeed(particleSpeed, ecartTypeSpeed);
   //console.log("particlesSpeeds", particlesSpeeds); // ✅ Vérification
   // Génération des tailles des particles
   particlesSizes = new Float32Array(particlesCount); // 1 taille (size) par particle
   particlesSizes = generateParticlesSize(particlesCount, particleSize);
-  // particlesSizes = [0.01, 0.02]; //pour test
-  console.log("particlesSizes", particlesSizes); // ✅ Vérification
-  particlesDatas = new Float32Array(particlesCount * 6); // ✅ 5 valeurs par particule
+  //console.log("particlesSizes", particlesSizes); // ✅ Vérification
+  particlesDatas = new Float32Array(particlesCount * 6); // ✅ 6 valeurs par particule
   // ✅ Fusion des données dans particlesDatas
   for (let i = 0; i < particlesCount; i++) {
     let index = i * 6; // ✅ Chaque particule a 6 valeurs
@@ -93,11 +91,15 @@ async function init() {
     particlesDatas[index + 3] = 0.0; // ✅ _PAD pour alignement memoire gpu
     particlesDatas[index + 4] = particlesSpeeds[i][0]; // ✅ VX
     particlesDatas[index + 5] = particlesSpeeds[i][1]; // ✅ VY
+    //particlesDatas[index + 6] = 0.0; // padding (optionnel mais propre)
+    //particlesDatas[index + 7] = 0.0; // padding (optionnel mais propre)
   }
   // console.log("particlesDatas", particlesDatas); // 🚀 Vérification que les données sont bien fusionnées
+  //console.log("particlesDatasbytelength", particlesDatas.byteLength);
 
   particlesBuffer = device.createBuffer({
     size: particlesDatas.byteLength,
+    //size: particlesCount * 8 * 4, // 8 floats × 4 bytes = 32 octets par particule
     usage:
       GPUBufferUsage.VERTEX |
       GPUBufferUsage.COPY_DST |
@@ -105,24 +107,42 @@ async function init() {
       GPUBufferUsage.COPY_SRC,
   });
 
-  device.queue.writeBuffer(particlesBuffer, 0, particlesDatas);
-  // console.log("particlesBuffer:", particlesBuffer);
-  // console.log("Buffer rempli et prêt :", particleData);
+  writeToBuffer(particlesBuffer, particlesDatas, "particlesBuffer");
+
+  // device.queue.writeBuffer(particlesBuffer, 0, particlesDatas);
+  //console.log("particlesBuffer:", particlesBuffer);
+  //console.log("Buffer rempli et prêt :", particlesDatas);
   //console.log("🔎 État du buffer après création:", particlesBuffer.mapState);
 
+  const correctionDatas = new Float32Array(4 * particlesCount); // Par défaut, Float32Array est déjà rempli de 0.0
+  correctionDatas.fill(0.0); // Mais tu peux le faire explicitement si besoin :
+  const correctionBuffer = device.createBuffer({
+    size: correctionDatas.byteLength,
+    usage:
+      GPUBufferUsage.STORAGE |
+      GPUBufferUsage.COPY_DST |
+      GPUBufferUsage.COPY_SRC,
+  });
+  //device.queue.writeBuffer(correctionBuffer, 0, correctionDatas);
+  writeToBuffer(correctionBuffer, correctionDatas, "correctionBuffer");
+
   // Création du buffer de couleur
-  particlesColors = new Float32Array(4); // 4 valeurs pour la couleur (RGBA)
+  /*   particlesColors = new Float32Array(4); // 4 valeurs pour la couleur (RGBA)
   particleColor = "red"; // ✅ Couleur rouge par défaut
   particlesColors =
     particleColor === "red"
       ? new Float32Array([1.0, 0.6, 0.6, 1.0]) // ✅ Rouge
-      : new Float32Array([0.0, 1.0, 0.0, 1.0]); // ✅ Valeur par défaut (vert)
+      : new Float32Array([0.0, 1.0, 0.0, 1.0]); // ✅ Valeur par défaut (vert) */
+
+  particlesColors = convertColor(particleColor);
 
   colorBuffer = device.createBuffer({
     size: 4 * Float32Array.BYTES_PER_ELEMENT, // 4 valeurs pour la couleur (RGBA)
     usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
   });
-  device.queue.writeBuffer(colorBuffer, 0, particlesColors); // Mise à jour du buffer avec la couleur
+  writeToBuffer(colorBuffer, particlesColors, "colorBuffer");
+
+  //device.queue.writeBuffer(colorBuffer, 0, particlesColors); // Mise à jour du buffer avec la couleur
   // console.log("colorBuffer:", colorBuffer);
 
   // Création du buffer d'aspect ratio = canvas.width / canvas.height;
@@ -130,67 +150,105 @@ async function init() {
     size: 4, // Un seul `f32`
     usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
   });
-  device.queue.writeBuffer(uniformBuffer, 0, new Float32Array([aspectRatio])); // Mise à jour du buffer avec `u_aspect`
+  writeToBuffer(
+    uniformBuffer,
+    new Float32Array([aspectRatio]),
+    "uniformBuffer"
+  );
+  // device.queue.writeBuffer(uniformBuffer, 0, new Float32Array([aspectRatio])); // Mise à jour du buffer avec `u_aspect`
   //console.log("uniformBuffer:", uniformBuffer); // 🚀 Vérification de la création du buffer
 
+  const uniformData = new Uint32Array([particlesCount]);
+  // const uniformData = new Uint32Array([10]);
+  uniformBuffer1 = device.createBuffer({
+    size: 4,
+    usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+  });
+  writeToBuffer(uniformBuffer1, uniformData, "uniformBuffer1");
+  // device.queue.writeBuffer(uniformBuffer1, 0, uniformData); // Mise à jour du buffer avec `particlesCount
+  //console.log("uniformBuffer1:", uniformBuffer1); // 🚀 Vérification de la création du buffer
+
   // Crée les sommets pour un cercle en triangle-list
-  circleVertexCount = 20; // const circleResolution = 20;
-  circleVertices = createCircleVertices(circleVertexCount);
+  //circleVertexCount = 20; //
+  circleResolution = 20; //nombre de sommet autour du cercle
+  circleVertices = createCircleVertices(circleResolution);
+  //console.log("circleVertices", circleVertices);
   vertexBuffer = device.createBuffer({
     size: circleVertices.byteLength,
+    // size: circleVertices.length * 4,
     usage: GPUBufferUsage.VERTEX,
     mappedAtCreation: true,
   });
+  // writeToBuffer(vertexBuffer, circleVertices, "vertexBuffer");
   new Float32Array(vertexBuffer.getMappedRange()).set(circleVertices);
   vertexBuffer.unmap();
-  circleVertexCount = circleVertices.length / 2; // nb de sommets pour un cercle
-  console.log("circlevertexCount", circleVertexCount);
+
   //creationde l index associé car wbgpu ne gere pas triangle-fan
   // Création des indices pour dessiner un cercle sous forme de triangle fan
   // Crée un tableau temporaire pour les indices
-  const indices = [];
+  /*   const indices = [];
   for (let i = 0; i < circleVertexCount; i++) {
     indices.push(0); // centre
     indices.push(i + 1);
     indices.push(((i + 1) % circleVertexCount) + 1);
+  } */
+
+  // circleVertexCount = circleVertexCount + 2; // total de sommets (centre + resolution + 1)
+  //circleVertexCount = circleResolution + 2; // total de sommets (centre + resolution + 1)
+  const indices = [];
+  for (let i = 1; i <= circleResolution; i++) {
+    indices.push(0); // centre
+    indices.push(i);
+    indices.push(i + 1);
   }
   // Conversion en Uint16Array (WebGPU attend des index 16 bits en général)
-  indexData = new Uint16Array(indices);
+  indexData = new Uint16Array(indices); //console.log(indexData);
   // Création du buffer d’index
   indexBuffer = device.createBuffer({
     size: indexData.byteLength,
+    // size: indexData.length * 2,
     usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST,
     mappedAtCreation: false,
   });
   // Upload des données dans le buffer
-  device.queue.writeBuffer(indexBuffer, 0, indexData);
-  //console.log("indexBuffer", indexBuffer);
-  // console.log("indexData", indexData);
+  writeToBuffer(indexBuffer, indexData, "indexBuffer");
+  //  device.queue.writeBuffer(indexBuffer, 0, indexData);
 
   // Chargement des shaders
   const computeModule = device.createShaderModule({
-    code: await (await fetch("./scripts/webgpu1/compute1c copy.wgsl")).text(),
+    code: await (await fetch("./scripts/webgpu1/compute1d.wgsl")).text(),
   });
   const vertexModule = device.createShaderModule({
-    code: await (await fetch("./scripts/webgpu1/vertex1c.wgsl")).text(),
+    code: await (await fetch("./scripts/webgpu1/vertex1d.wgsl")).text(),
   });
   const fragmentModule = device.createShaderModule({
-    code: await (await fetch("./scripts/webgpu1/fragment1c.wgsl")).text(),
+    code: await (await fetch("./scripts/webgpu1/fragment1d.wgsl")).text(),
   });
 
   //compute bind groups
+
   const computeBindGroupLayout = device.createBindGroupLayout({
     entries: [
       {
         binding: 0,
         visibility: GPUShaderStage.COMPUTE,
         buffer: { type: "storage" },
-      }, // Positions
+      }, // ParticlesDatas buffer
       {
         binding: 1,
         visibility: GPUShaderStage.COMPUTE,
         buffer: { type: "uniform" },
       }, // ✅ Ajout de `u_aspect`
+      {
+        binding: 3,
+        visibility: GPUShaderStage.COMPUTE,
+        buffer: { type: "uniform" },
+      }, // ✅ Ajout de `particlesCount`
+      {
+        binding: 2,
+        visibility: GPUShaderStage.COMPUTE,
+        buffer: { type: "storage" },
+      }, //Ajout de corrections buffer
     ],
   });
 
@@ -199,24 +257,30 @@ async function init() {
     entries: [
       { binding: 0, resource: { buffer: particlesBuffer } }, // Positions
       { binding: 1, resource: { buffer: uniformBuffer } }, // ✅ Ajout de `u_aspect`
+      { binding: 3, resource: { buffer: uniformBuffer1 } }, // ✅ Ajout de `particlesCount`
       //{ binding: 2, resource: { buffer: colorBuffer } }, // Couleur (optionnel pour le compute)
+      { binding: 2, resource: { buffer: correctionBuffer } }, //Corrections
     ],
   });
 
-  computePipeline = device.createComputePipeline({
+  // 2️⃣ Crée les pipelines de calcul
+  computePipeline1 = device.createComputePipeline({
     layout: device.createPipelineLayout({
       bindGroupLayouts: [computeBindGroupLayout],
     }),
-    compute: {
-      module: computeModule,
-      entryPoint: "main",
-    },
+    compute: { module: computeModule, entryPoint: "simulate" },
   });
-  //console.log("computePipeline:", computePipeline); // 🚀 Vérification de la création du pipeline
+
+  computePipeline2 = device.createComputePipeline({
+    layout: device.createPipelineLayout({
+      bindGroupLayouts: [computeBindGroupLayout],
+    }),
+    compute: { module: computeModule, entryPoint: "apply_corrections" },
+  });
+  //console.log("computePipeline1:", computePipeline1); // 🚀 Vérification de la création du pipeline
 
   // render bind groups
   //create render bing group layout
-
   const renderBindGroupLayout = device.createBindGroupLayout({
     entries: [
       {
@@ -277,41 +341,36 @@ async function init() {
 }
 
 async function render() {
-  // console.log("Rendering...");
+  // 1️⃣ Création du CommandEncoder
   const encoder = device.createCommandEncoder();
-  // Compute pass
-  const computePass = encoder.beginComputePass();
-  computePass.setPipeline(computePipeline);
-  computePass.setBindGroup(0, computeBindGroup);
-  computePass.dispatchWorkgroups(particlesCount);
+  //compute pass
+  // 2️⃣ Premier kernel : simulation
+  {
+    const computePass = encoder.beginComputePass();
+    computePass.setPipeline(computePipeline1);
+    computePass.setBindGroup(0, computeBindGroup);
+    computePass.dispatchWorkgroups(Math.ceil(particlesCount / 64));
+    //  computePass.dispatchWorkgroups(Math.min(1, Math.ceil(particlesCount / 64)));
+    //computePass.dispatchWorkgroups(1);
+    computePass.end();
+  }
 
-  // computePass.dispatchWorkgroups(Math.max(1, Math.ceil(particlesCount / 64)));
-
-  //const workgroupSize = 64;
-  // const numWorkgroups = Math.ceil(particlesCount / workgroupSize);
-  //computePass.dispatchWorkgroups(numWorkgroups);
-  //computePass.dispatchWorkgroups(12, 2, 2);
-
-  //computePass.dispatchWorkgroups(Math.max(1, Math.ceil(particlesCount / 64)));
-
-  // computePass.dispatchWorkgroups(1);
-  computePass.end();
-
-  // Copie posBuffer pour lecture CPU (read-back)
-  /*   const readBuffer = device.createBuffer({
-    size: particlesDatas.byteLength,
-    usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
-  });
-  encoder.copyBufferToBuffer(particlesBuffer, 0, readBuffer, 0, 2 * 4); */
-
-  // Render pass
-  //console.log("particlesBuffer:", particlesBuffer);
+  // 3️⃣ Deuxième kernel : correction
+  {
+    const computePass = encoder.beginComputePass();
+    computePass.setPipeline(computePipeline2);
+    computePass.setBindGroup(0, computeBindGroup);
+    computePass.dispatchWorkgroups(Math.ceil(particlesCount / 64));
+    //computePass.dispatchWorkgroups(1);
+    computePass.end();
+  }
+  //render pass
   const textureView = context.getCurrentTexture().createView();
   const renderPass = encoder.beginRenderPass({
     colorAttachments: [
       {
         view: textureView,
-        clearValue: { r: 0.1, g: 0.1, b: 0.15, a: 1 },
+        clearValue: { r: 0.1, g: 0.3, b: 0.4, a: 1 },
         loadOp: "clear",
         storeOp: "store",
       },
@@ -326,6 +385,10 @@ async function render() {
   // console.log("indexbuffer", indexBuffer);
   renderPass.setIndexBuffer(indexBuffer, "uint16");
   renderPass.drawIndexed(indexData.length, particlesCount, 0, 0, 0);
+  //console.log("indexlenght", indexData.length);
+
+  //renderPass.draw(particlesCount, 1, 0, 0);
+
   //console.log("indexDataslenght", indexData.length);
   //console.log("vertexCount", vertexCount);
   // renderPass.draw(circleVertexCount, particlesCount, 0, 0);
@@ -345,7 +408,12 @@ async function render() {
   requestAnimationFrame(render);
 }
 //--------------------------------------functions----------------------------
-function createCircleVertices(resolution) {
+function writeToBuffer(buffer, data, label = "inconnu") {
+  device.queue.writeBuffer(buffer, 0, data);
+  console.log(`✅ Données écrites dans : ${label}`);
+}
+
+/* function createCircleVertices(resolution) {
   const vertices = [];
   const angleStep = (2 * Math.PI) / resolution;
   vertices.push(0, 0); // centre
@@ -354,15 +422,21 @@ function createCircleVertices(resolution) {
     vertices.push(Math.cos(angle), Math.sin(angle));
   }
   return new Float32Array(vertices);
+} */
+
+function createCircleVertices(resolution) {
+  const vertices = [];
+  const angleStep = (2 * Math.PI) / resolution;
+  vertices.push(0, 0); // centre
+
+  for (let i = 0; i <= resolution; i++) {
+    const angle = i * angleStep;
+    vertices.push(Math.cos(angle), Math.sin(angle));
+  }
+  return new Float32Array(vertices); // total = resolution + 2 points
 }
 
 function readSlider() {
-  const countSlider = document.getElementById("countSlider");
-  const sizeSlider = document.getElementById("sizeSlider");
-  const speedSlider = document.getElementById("speedSlider");
-  const rotationSlider = document.getElementById("rotationSlider");
-  const colorSelect = document.getElementById("colorSelect");
-
   // Lecture des valeurs des sliders
   const particlesCount = parseInt(countSlider.value);
   const particleSpeed = parseFloat(speedSlider.value);
@@ -374,9 +448,9 @@ function readSlider() {
 
 function generateParticlesUniquePositions(particlesCount, minDist) {
   let positions = [];
-
   while (positions.length < particlesCount) {
     let newPos = [(Math.random() * 2 - 1) * 0.9, (Math.random() * 2 - 1) * 0.9]; // ✅ Génère une position aléatoire
+    //let newPos = [1.0, (Math.random() * 2 - 1) * 0.9]; // ✅test
 
     // Vérifie que la nouvelle position n'est pas trop proche des autres
     let isUnique = positions.every(
@@ -389,40 +463,69 @@ function generateParticlesUniquePositions(particlesCount, minDist) {
   }
   return positions;
 }
-function generateParticlesSpeed(speed) {
-  speed = speed / particlesSpeedMax;
-  //sécurité
-  speed = Math.max(particlesSpeedMin, Math.min(particlesSpeedMax, speed));
 
+function generateParticlesCount(count) {
+  // console.log("generateParticlesCount");
+  const sliderValue = count;
+  const minSlider = 0;
+  const maxSlider = 100;
+
+  const minParticles = 2;
+  const maxParticles = 1000;
+
+  const t = (sliderValue - minSlider) / (maxSlider - minSlider); // de 0 à 1
+  const curvedT = Math.pow(t, 2); // courbe avec plus de détails au début
+  const newparticlesCount = Math.round(
+    minParticles + curvedT * (maxParticles - minParticles)
+  );
+  // console.log("newparticlesCount", newparticlesCount);
+
+  return newparticlesCount; // Math.round(minParticles + curvedT * (maxParticles - minParticles));
+}
+
+/* function generateParticlesCount(count) {
+  console.log("generateParticlesCount");
+  //slider entre 1 et 100 et particlesCount entre 2 et 1000
+  particlesCount = parseInt(10.08 * count - 8.08);
+  return particlesCount;
+} */
+
+function generateParticlesSpeed(speed, ecartTypeSpeed) {
+  let pspeed = speed / particlesSpeedMax;
+  //sécurité
+  pspeed = Math.max(particlesSpeedMin, Math.min(particlesSpeedMax, pspeed));
   let speeds = [];
   for (let i = 0; i < particlesCount; i++) {
     let speedGenerée = randomNormal(speed, ecartTypeSpeed);
     // On contraint à la plage de speed
-    speed = Math.max(
+    pspeed = Math.max(
       particlesSpeedMin,
       Math.min(particlesSpeedMax, speedGenerée)
     );
+    //console.log("psspeed", pspeed);
     const angle = Math.random() * 2 * Math.PI;
-    speeds.push([Math.cos(angle) * speed, Math.sin(angle) * speed]);
+    speeds.push([Math.cos(angle) * pspeed, Math.sin(angle) * pspeed]);
   }
   console.log("generateParticlesSpeed", speeds);
   return speeds;
 }
 function generateParticlesSize(count, size) {
-  //slider entre 1 et 100( defaut) et size entre particleSizeMin et particleSizeMax
-  size = size / particlesSizeMax;
+  //slider entre 0 et 100( defaut) et size entre particleSizeMin et particleSizeMax
+
+  //size = size / particlesSizeMax;
+  size =
+    ((particlesSizeMax - particlesSizeMin) / 100) * size + particlesSizeMin;
+  console.log("size", size);
   //sécurité
   size = Math.max(particlesSizeMin, Math.min(particlesSizeMax, size));
-
   let sizes = [];
   for (let i = 0; i < count; i++) {
     let sizeGenerée = randomNormal(size, ecartTypeSize);
     // On contraint à la plage de size
     size = Math.max(particlesSizeMin, Math.min(particlesSizeMax, sizeGenerée));
-
-    sizes.push(size + 0.5 * size * (Math.random() * 2 - 1)); // Utilise la taille définie par le slider
+    sizes.push(size);
   }
-  // console.log("generateParticleSize", sizes);
+  console.log("generateParticleSize", sizes);
   return sizes;
 }
 // distribution normale gaussienne
@@ -434,6 +537,30 @@ function randomNormal(mean, stdDev) {
   let z = Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
   return mean + z * stdDev;
 }
+function convertColor(colorName) {
+  const colors = {
+    red: [1.0, 0.6, 0.6, 1.0],
+    green: [0.0, 1.0, 0.0, 1.0],
+    blue: [0.6, 0.6, 1.0, 1.0],
+    yellow: [1.0, 1.0, 0.6, 1.0],
+    pink: [1.0, 0.75, 0.8, 1.0],
+    orange: [1.0, 0.6, 0.2, 1.0],
+    birdofparadise: [0.9, 0.4, 0.9, 1.0],
+    tropicalSunset: [1.0, 0.4, 0.2, 1.0],
+    mysticAurora: [0.4, 0.8, 0.9, 1.0],
+    cottonCandySky: [1.0, 0.7, 0.9, 1.0],
+    sunsetGlow: [1.0, 0.5, 0.4, 1.0],
+    emeraldDream: [0.3, 0.9, 0.6, 1.0],
+    fieryPassion: [1.0, 0.3, 0.2, 1.0],
+    oceanBreeze: [0.2, 0.7, 1.0, 1.0],
+    lavenderFields: [0.7, 0.6, 1.0, 1.0],
+    goldenHour: [1.0, 0.8, 0.4, 1.0],
+    crimsonTwilight: [0.6, 0.1, 0.2, 1.0],
+    forestWhisper: [0.2, 0.5, 0.2, 1.0],
+  };
+
+  return new Float32Array(colors[colorName] || [1.0, 1.0, 1.0, 1.0]); // Blanc si inconnue
+}
 
 // 🎚️ Exemples d'interaction (connecte ça à ton slider panel)
 
@@ -444,30 +571,27 @@ const rotationSlider = document.getElementById("rotationSlider");
 const colorSelect = document.getElementById("colorSelect");
 
 countSlider.addEventListener("input", () => {
-  change(
-    parseInt(countSlider.value),
+  change();
+  /*   parseInt(countSlider.value),
     particleSpeed,
     particleSize,
-    particleColor
-  );
+    particleColor */
 });
 
 sizeSlider.addEventListener("input", () => {
-  change(
-    particlesCount,
+  change();
+  /*     particlesCount,
     particleSpeed,
     parseFloat(sizeSlider.value), // taille en pourcentage
-    particleColor
-  );
+    particleColor */
 });
 
 speedSlider.addEventListener("input", () => {
-  change(
-    particlesCount,
+  change();
+  /*     particlesCount,
     parseFloat(speedSlider.value),
     particleSize,
-    particleColor
-  );
+    particleColor */
 });
 
 rotationSlider.addEventListener("input", () => {
@@ -475,7 +599,8 @@ rotationSlider.addEventListener("input", () => {
 });
 
 colorSelect.addEventListener("change", () => {
-  change(particlesCount, particleSpeed, particleSize, colorSelect.value);
+  change();
+  //change(particlesCount, particleSpeed, particleSize, colorSelect.value);
   //setGradient(colorSelect.value);
 });
 
@@ -508,7 +633,98 @@ window.addEventListener("resize", resizeCanvas);
 resizeCanvas(); // au démarrage
 
 // Changer les paramètres dynamiquement (slider)
-function change(count, speed, size, color) {
+function change() {
+  //console.log("function change()");
+  let readparticlesCount,
+    readparticleSpeed,
+    readparticleSize,
+    readparticleColor;
+  //[particlesCount, particleSpeed, particleSize, particleColor] = readSlider();
+  [readparticlesCount, readparticleSpeed, readparticleSize, readparticleColor] =
+    readSlider();
+  /*   console.log(
+    "read values from sliders:",
+    "count:",
+    readparticlesCount,
+    "speed:",
+    readparticleSpeed,
+    "size:",
+    readparticleSize,
+    "color:",
+    readparticleColor
+  ); */
+  readparticlesCount = generateParticlesCount(readparticlesCount); //pour garder slider en 0 et 100(defaut) et count entre2 et 1000
+  //console.log("readparticlesCount", readparticlesCount);
+
+  const oldValues = [
+    particlesCount,
+    particleSpeed,
+    particleSize,
+    String(particleColor).toLowerCase(), // <-- forçage en string
+  ];
+  const newValues = [
+    readparticlesCount,
+    readparticleSpeed,
+    readparticleSize,
+    String(readparticleColor).toLowerCase(), // // <-- forçage en string
+  ];
+  const variableNames = [
+    "particlesCount",
+    "particleSpeed",
+    "particleSize",
+    "particleColor",
+  ];
+
+  const changedVars = getChangedVariables(oldValues, newValues, variableNames);
+  console.log("Variables modifiées :", changedVars);
+  if (changedVars.includes("particlesCount")) changeCount();
+  if (changedVars.includes("particleSpeed")) changeSpeed();
+  if (changedVars.includes("particleSize")) changeSize(readparticleSize);
+  if (changedVars.includes("particleColor")) changeColor();
+}
+
+function getChangedVariables(oldValues, newValues, variableNames) {
+  const changed = [];
+  for (let i = 0; i < variableNames.length; i++) {
+    if (oldValues[i] !== newValues[i]) {
+      changed.push(variableNames[i]);
+    }
+  }
+  return changed; // tableau des noms qui ont changé
+}
+
+function changeColor() {
+  console.log("changeColor()");
+}
+function changeCount() {
+  console.log("changeCount()");
+}
+function changeSize(size) {
+  particleSize = size; // mise  jour  size
+  console.log("changeSize()");
+  changeSizes(particleSize);
+  //articlesSizes = generateParticlesSize(particlesCount, particleSize); //mise a jour tableaux size
+}
+function changeSpeed() {
+  console.log("changeSpeed()");
+}
+
+function changeSizes(newSize) {
+  console.log("🔧 Mise à jour des tailles avec size =", newSize);
+  // Regénère toutes les tailles avec distribution normale autour de newSize
+  particlesSizes = generateParticlesSize(particlesCount, newSize);
+
+  // Met à jour uniquement les tailles dans particlesDatas (offset +2 dans chaque bloc de 6 floats)
+  for (let i = 0; i < particlesCount; i++) {
+    let index = i * 6 + 2; // Champ "size"
+    particlesDatas[index] = particlesSizes[i];
+  }
+  // Réécrit dans le buffer GPU sans toucher aux autres données
+  writeToBuffer(particlesBuffer, particlesDatas, "particlesBuffer");
+  //device.queue.writeBuffer(particlesBuffer, 0, particlesDatas);
+}
+
+/* function change(count, speed, size, color) {
   if (!count || !speed || !size || !color) {
     console.error("Invalid parameters for change function");
     return;
@@ -541,4 +757,4 @@ function change(count, speed, size, color) {
     console.log("Changing color to:", particleColor);
     // Recréer le buffer de couleur si la couleur change
   }
-}
+} */

@@ -27,10 +27,10 @@ const particlesCountMin = 2;
 const particlesCountMax = 1000;
 const particlesSpeedMin = 0.0005;
 const particlesSpeedMax = 0.002;
-const ecartTypeSpeed = 0.0005; // √variance
+const ecartTypeSpeed = 0.0; // √variance
 const particlesSizeMin = 0.01;
 const particlesSizeMax = 0.1;
-const ecartTypeSize = 0.001; // √variance
+const ecartTypeSize = 0.0; // √variance
 
 document.addEventListener("DOMContentLoaded", () => {
   init();
@@ -169,13 +169,13 @@ async function init() {
 
   // Chargement des shaders
   const computeModule = device.createShaderModule({
-    code: await (await fetch("./scripts/webgpu1/compute1c copy.wgsl")).text(),
+    code: await (await fetch("./scripts/webgpu1/compute1e.wgsl")).text(),
   });
   const vertexModule = device.createShaderModule({
-    code: await (await fetch("./scripts/webgpu1/vertex1c.wgsl")).text(),
+    code: await (await fetch("./scripts/webgpu1/vertex1e.wgsl")).text(),
   });
   const fragmentModule = device.createShaderModule({
-    code: await (await fetch("./scripts/webgpu1/fragment1c.wgsl")).text(),
+    code: await (await fetch("./scripts/webgpu1/fragment1e.wgsl")).text(),
   });
 
   //compute bind groups
@@ -280,22 +280,19 @@ async function render() {
   // console.log("Rendering...");
   const encoder = device.createCommandEncoder();
   // Compute pass
-  const computePass = encoder.beginComputePass();
-  computePass.setPipeline(computePipeline);
-  computePass.setBindGroup(0, computeBindGroup);
-  computePass.dispatchWorkgroups(particlesCount);
+  // const computePass = encoder.beginComputePass();
+  // computePass.setPipeline(computePipeline);
+  // computePass.setBindGroup(0, computeBindGroup);
+  // computePass.dispatchWorkgroups(particlesCount);
 
   // computePass.dispatchWorkgroups(Math.max(1, Math.ceil(particlesCount / 64)));
 
   //const workgroupSize = 64;
   // const numWorkgroups = Math.ceil(particlesCount / workgroupSize);
   //computePass.dispatchWorkgroups(numWorkgroups);
-  //computePass.dispatchWorkgroups(12, 2, 2);
-
   //computePass.dispatchWorkgroups(Math.max(1, Math.ceil(particlesCount / 64)));
 
-  // computePass.dispatchWorkgroups(1);
-  computePass.end();
+  //computePass.end();
 
   // Copie posBuffer pour lecture CPU (read-back)
   /*   const readBuffer = device.createBuffer({
@@ -357,11 +354,11 @@ function createCircleVertices(resolution) {
 }
 
 function readSlider() {
-  const countSlider = document.getElementById("countSlider");
+  /*   const countSlider = document.getElementById("countSlider");
   const sizeSlider = document.getElementById("sizeSlider");
   const speedSlider = document.getElementById("speedSlider");
   const rotationSlider = document.getElementById("rotationSlider");
-  const colorSelect = document.getElementById("colorSelect");
+  const colorSelect = document.getElementById("colorSelect"); */
 
   // Lecture des valeurs des sliders
   const particlesCount = parseInt(countSlider.value);
@@ -376,7 +373,11 @@ function generateParticlesUniquePositions(particlesCount, minDist) {
   let positions = [];
 
   while (positions.length < particlesCount) {
-    let newPos = [(Math.random() * 2 - 1) * 0.9, (Math.random() * 2 - 1) * 0.9]; // ✅ Génère une position aléatoire
+    let newPos = [
+      (Math.random() * 2 - 1) * 0.95,
+      (Math.random() * 2 - 1) * 0.95,
+    ]; // ✅ Génère une position aléatoire
+    // let newPos = [(Math.random() * 2 - 1) * 1.0, -1.0]; // ✅ pour test
 
     // Vérifie que la nouvelle position n'est pas trop proche des autres
     let isUnique = positions.every(
@@ -420,7 +421,8 @@ function generateParticlesSize(count, size) {
     // On contraint à la plage de size
     size = Math.max(particlesSizeMin, Math.min(particlesSizeMax, sizeGenerée));
 
-    sizes.push(size + 0.5 * size * (Math.random() * 2 - 1)); // Utilise la taille définie par le slider
+    sizes.push(size); // Utilise la taille définie par le slider
+    //sizes.push(size + 0.5 * size * (Math.random() * 2 - 1)); // Utilise la taille définie par le slider
   }
   // console.log("generateParticleSize", sizes);
   return sizes;

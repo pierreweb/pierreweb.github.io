@@ -19,13 +19,8 @@
         <div id="controls">
           <label>
             Nombre de balles
-            <input
-              type="range"
-              id="countSlider"
-              min="2"
-              max="1000"
-              value="10"
-            />
+            <input type="range" id="countSlider" value="20" />
+            <!-- min="2" max="1000" -->
           </label>
           <label>
             Taille balles(% écran)
@@ -34,7 +29,7 @@
 
           <label
             >Vitesse des balles
-            <input type="range" id="speedSlider" value="1" />
+            <input type="range" id="speedSlider" value="15" />
           </label>
 
           <label>
@@ -78,7 +73,7 @@
         </label> -->
           <label style="display: flex; gap: 10px">
             <button
-              onclick="import('./scripts/webgpu1/mainwebgpu1c.js').then(m => m.goFullscreen())"
+              onclick="import('./scripts/webgpu1/mainwebgpu1d.js').then(m => m.goFullscreen())"
             >
               Plein écran
             </button>
@@ -92,7 +87,7 @@
         <div id="cornerTrigger"></div>
       </div>
     </div>
-    <script type="module" src="./scripts/webgpu1/mainwebgpu1c.js"></script>
+    <script type="module" src="./scripts/webgpu1/mainwebgpu1d.js"></script>
 
     <script src="./scripts/audio.js"></script>
 

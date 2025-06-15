@@ -78,7 +78,7 @@
         </label> -->
           <label style="display: flex; gap: 10px">
             <button
-              onclick="import('./scripts/webgpu1/mainwebgpu1c.js').then(m => m.goFullscreen())"
+              onclick="import('./scripts/webgpu1/mainwebgpu1e.js').then(m => m.goFullscreen())"
             >
               Plein écran
             </button>
@@ -92,35 +92,10 @@
         <div id="cornerTrigger"></div>
       </div>
     </div>
-    <script type="module" src="./scripts/webgpu1/mainwebgpu1c.js"></script>
+    <script type="module" src="./scripts/webgpu1/mainwebgpu1e.js"></script>
 
     <script src="./scripts/audio.js"></script>
 
     <!-- <script src="./scripts/shaderpingpong/shaderpingpong.js"></script> -->
   </body>
 </html>
-
-<!-- 
-        <label>
-            Taille balles(% écran)
-            <input
-              type="range"
-              id="sizeSlider"
-              min="0.01"
-              max="0.5"
-              step="0.01"
-              value="0.05"
-            />
-          </label>
-
-          <label
-            >Vitesse des balles
-            <input
-              type="range"
-              id="speedSlider"
-              min="0.01"
-              max="1.0"
-              step="0.01"
-              value="0.01"
-            />
-          </label> -->
