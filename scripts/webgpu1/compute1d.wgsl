@@ -61,8 +61,8 @@ fn simulate(@builtin(global_invocation_id) id: vec3<u32>) {
   // Utilisation des corrections séparées
   var corr = corrections[i];
   // Réinitialiser la correction de cette balle
-  corr.pos =vec2<f32>(0.0, 0.0);
-  corr.velocity =vec2<f32>(0.0, 0.0);
+ // corr.pos =vec2<f32>(0.0, 0.0);
+  //corr.velocity =vec2<f32>(0.0, 0.0);
   
   
 
@@ -85,16 +85,26 @@ fn simulate(@builtin(global_invocation_id) id: vec3<u32>) {
       let overlap = mindistance - distance;
 
 
-      if (speed < 0.0) { // Corrige si les particules s’éloignent déjà
-        continue;
+      if (speed <= 0.0) { // Corrige si les particules s’éloignent déjà
+        p.pos-=halfSize*2.0*normalizeDirection*overlap;
+           other.pos += halfSize *2.0* overlap * normalizeDirection;
+       continue;
+   
+        // p.velocity =vec2<f32>(0.0,0.0);//pour test
+  
       }
+
+
+         // Corrige les positions pour éviter l'interpénétration
+     // p.pos -= 0.5 * overlap * normalizeDirection;
+     p.pos-=halfSize*2.0*normalizeDirection*overlap;
+         //p.pos-=halfSize*normalizeDirection*overlap;
+     other.pos += halfSize * overlap * normalizeDirection;
+
       // Réponse simple : échange de vitesses projetées sur la normale (rebond élastique approximatif)
       p.velocity =-1.0* length(p.velocity)*normalizeDirection;
     
-      // Corrige les positions pour éviter l'interpénétration
-     // p.pos -= 0.5 * overlap * normalizeDirection;
-     // p.pos-=halfSize*normalizeDirection*overlap;
-     //other.pos += 0.5 * overlap * normalizeDirection;
+   
     }
 
 

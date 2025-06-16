@@ -1,6 +1,7 @@
 let canvas, adapter, device, context, format;
 let computePipeline, computePipeline1, computePipeline2, renderPipeline;
 let particlesBuffer,
+  correctionBuffer,
   colorBuffer,
   uniformBuffer, //u_aspect
   uniformBuffer1, //particlesCount
@@ -23,12 +24,13 @@ let particlesCount,
   particlesSizes,
   particlesSpeeds,
   particlesColors,
-  particlesDatas;
+  particlesDatas,
+  correctionDatas;
 //je laisse les sliders à valeur par defaut entre 0 et 100 step 1 et je regle ici
 const particlesCountMin = 2;
 const particlesCountMax = 1000;
-const particlesSpeedMin = 0.00005;
-const particlesSpeedMax = 0.0005;
+const particlesSpeedMin = 0.0;
+const particlesSpeedMax = 0.0009;
 const ecartTypeSpeed = 0.0; // √variance
 const particlesSizeMin = 0.01;
 const particlesSizeMax = 0.3;
@@ -114,9 +116,9 @@ async function init() {
   //console.log("Buffer rempli et prêt :", particlesDatas);
   //console.log("🔎 État du buffer après création:", particlesBuffer.mapState);
 
-  const correctionDatas = new Float32Array(4 * particlesCount); // Par défaut, Float32Array est déjà rempli de 0.0
+  correctionDatas = new Float32Array(4 * particlesCount); // Par défaut, Float32Array est déjà rempli de 0.0
   correctionDatas.fill(0.0); // Mais tu peux le faire explicitement si besoin :
-  const correctionBuffer = device.createBuffer({
+  correctionBuffer = device.createBuffer({
     size: correctionDatas.byteLength,
     usage:
       GPUBufferUsage.STORAGE |
@@ -364,6 +366,7 @@ async function render() {
     //computePass.dispatchWorkgroups(1);
     computePass.end();
   }
+
   //render pass
   const textureView = context.getCurrentTexture().createView();
   const renderPass = encoder.beginRenderPass({
@@ -491,24 +494,30 @@ function generateParticlesCount(count) {
 } */
 
 function generateParticlesSpeed(speed, ecartTypeSpeed) {
-  let pspeed = speed / particlesSpeedMax;
+  //conversion slider 0 à 100 en speed min à max
+  const nspeed = speed;
+  let pspeed =
+    ((particlesSpeedMax - particlesSpeedMin) / 100) * nspeed +
+    particlesSpeedMin;
   //sécurité
-  pspeed = Math.max(particlesSpeedMin, Math.min(particlesSpeedMax, pspeed));
+  // pspeed = Math.max(particlesSpeedMin, Math.min(particlesSpeedMax, pspeed));
+  console.log("nspeed", nspeed, "pspeed", pspeed);
   let speeds = [];
   for (let i = 0; i < particlesCount; i++) {
-    let speedGenerée = randomNormal(speed, ecartTypeSpeed);
+    let speedGenerée = randomNormal(pspeed, ecartTypeSpeed);
     // On contraint à la plage de speed
-    pspeed = Math.max(
+    const pspeedcor = Math.max(
       particlesSpeedMin,
       Math.min(particlesSpeedMax, speedGenerée)
     );
     //console.log("psspeed", pspeed);
     const angle = Math.random() * 2 * Math.PI;
-    speeds.push([Math.cos(angle) * pspeed, Math.sin(angle) * pspeed]);
+    speeds.push([Math.cos(angle) * pspeedcor, Math.sin(angle) * pspeedcor]);
   }
   console.log("generateParticlesSpeed", speeds);
   return speeds;
 }
+
 function generateParticlesSize(count, size) {
   //slider entre 0 et 100( defaut) et size entre particleSizeMin et particleSizeMax
 
@@ -538,6 +547,7 @@ function randomNormal(mean, stdDev) {
   return mean + z * stdDev;
 }
 function convertColor(colorName) {
+  console.log("test0", colorName);
   const colors = {
     red: [1.0, 0.6, 0.6, 1.0],
     green: [0.0, 1.0, 0.0, 1.0],
@@ -558,7 +568,7 @@ function convertColor(colorName) {
     crimsonTwilight: [0.6, 0.1, 0.2, 1.0],
     forestWhisper: [0.2, 0.5, 0.2, 1.0],
   };
-
+  console.log("test", colors[colorName]);
   return new Float32Array(colors[colorName] || [1.0, 1.0, 1.0, 1.0]); // Blanc si inconnue
 }
 
@@ -626,11 +636,23 @@ function resizeCanvas() {
   canvas.height = window.innerHeight;
   aspectRatio = canvas.width / canvas.height; // Met à jour l'aspect ratio
   //console.log("Aspect Ratio après resize:", aspectRatio);
-  // gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
-  // gl.viewport(0, 0, canvas.width, canvas.height);
+  changeUAspect(aspectRatio);
 }
+
 window.addEventListener("resize", resizeCanvas);
 resizeCanvas(); // au démarrage
+
+function changeUAspect(newAspect) {
+  const aspectData = new Float32Array([newAspect]);
+  //device.queue.writeBuffer(uniformBuffer, 0, aspectData);
+  writeToBuffer(
+    uniformBuffer,
+    //new Float32Array([aspectRatio]),
+    aspectData,
+    "uniformBuffer"
+  );
+  console.log("🟢 u_aspect mis à jour :", newAspect);
+}
 
 // Changer les paramètres dynamiquement (slider)
 function change() {
@@ -678,9 +700,9 @@ function change() {
   const changedVars = getChangedVariables(oldValues, newValues, variableNames);
   console.log("Variables modifiées :", changedVars);
   if (changedVars.includes("particlesCount")) changeCount();
-  if (changedVars.includes("particleSpeed")) changeSpeed();
+  if (changedVars.includes("particleSpeed")) changeSpeed(readparticleSpeed);
   if (changedVars.includes("particleSize")) changeSize(readparticleSize);
-  if (changedVars.includes("particleColor")) changeColor();
+  if (changedVars.includes("particleColor")) changeColor(readparticleColor);
 }
 
 function getChangedVariables(oldValues, newValues, variableNames) {
@@ -693,9 +715,16 @@ function getChangedVariables(oldValues, newValues, variableNames) {
   return changed; // tableau des noms qui ont changé
 }
 
-function changeColor() {
-  console.log("changeColor()");
+function changeColor(colorName) {
+  console.log("changeColor()", colorName);
+  particleColor = colorName;
+  particlesColors = convertColor(particleColor);
+  //const rgba = colorMap[colorName] || [1.0, 1.0, 1.0, 1.0]; // blanc par défaut
+  // const newColor = new Float32Array(rgba);
+  //device.queue.writeBuffer(colorBuffer, 0, newColor);
+  writeToBuffer(colorBuffer, particlesColors, "colorBuffer");
 }
+
 function changeCount() {
   console.log("changeCount()");
 }
@@ -705,9 +734,40 @@ function changeSize(size) {
   changeSizes(particleSize);
   //articlesSizes = generateParticlesSize(particlesCount, particleSize); //mise a jour tableaux size
 }
-function changeSpeed() {
-  console.log("changeSpeed()");
+
+function changeSpeed(newSpeed) {
+  console.log("changeSpeed() 🔁 Changement de vitesse des particules");
+  console.log("newSpeed", newSpeed);
+
+  // 1. Générer les nouvelles vitesses
+  particlesSpeeds = generateParticlesSpeed(newSpeed, ecartTypeSpeed);
+
+  // 2. Mettre à jour particlesDatas uniquement pour VX et VY
+  for (let i = 0; i < particlesCount; i++) {
+    let index = i * 6;
+    particlesDatas[index + 4] = particlesSpeeds[i][0]; // VX
+    particlesDatas[index + 5] = particlesSpeeds[i][1]; // VY
+  }
+  // 2. Construction d’un tableau plat pour correctionBuffer (4 floats/particule) ( suis pas sur que ca soit utile)
+  //console.log("testcount", correctionDatas);
+  //correctionDatas = new Float32Array(4 * particlesCount);
+  for (let i = 0; i < particlesCount; i++) {
+    const base = i * 4;
+    //correctionDatas[base + 0] = 0.0; // DX inutilisé ici ?
+    //correctionDatas[base + 1] = 0.0; // DY inutilisé ici ?
+    correctionDatas[base + 2] = particlesSpeeds[i][0]; // VX
+    correctionDatas[base + 3] = particlesSpeeds[i][1]; // VY
+  }
+  //console.log("testcount1", correctionDatas);
+
+  // 3. Réécriture dans le buffer existant
+  writeToBuffer(particlesBuffer, particlesDatas, "particlesBuffer");
+  writeToBuffer(correctionBuffer, correctionDatas, "correctionBuffer");
+  // console.log("✅ Vitesse mise à jour !");
 }
+
+// const correctionDatas = new Float32Array(4 * particlesCount); // Par défaut, Float32Array est déjà rempli de 0.0
+// correctionDatas.fill(0.0); // Mais tu peux le faire explicitement si besoin :
 
 function changeSizes(newSize) {
   console.log("🔧 Mise à jour des tailles avec size =", newSize);
