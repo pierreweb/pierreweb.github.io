@@ -1,4 +1,12 @@
-let canvas, adapter, device, context, format;
+let canvas,
+  adapter,
+  device,
+  context,
+  format,
+  computeModule,
+  vertexModule,
+  fragmentModule,
+  animationFrameId;
 let computePipeline, computePipeline1, computePipeline2, renderPipeline;
 let particlesBuffer,
   correctionBuffer,
@@ -30,15 +38,23 @@ let particlesCount,
 const particlesCountMin = 2;
 const particlesCountMax = 1000;
 const particlesSpeedMin = 0.0;
-const particlesSpeedMax = 0.0009;
+const particlesSpeedMax = 0.00009;
 const ecartTypeSpeed = 0.0; // √variance
 const particlesSizeMin = 0.01;
 const particlesSizeMax = 0.3;
 const ecartTypeSize = 0.0; // √variance
 
-document.addEventListener("DOMContentLoaded", () => {
+/* document.addEventListener("DOMContentLoaded", () => {
   init();
-});
+}); */
+
+async function main() {
+  await init(); // 👈 bien attendre init()
+  await initParticles(); // 👈 pas avant
+  render(); // 👈 puis démarrer la boucle
+}
+
+main();
 
 async function init() {
   canvas = document.querySelector("#gpuCanvas");
@@ -48,6 +64,7 @@ async function init() {
   // console.log("Aspect Ratio:", aspectRatio);
   adapter = await navigator.gpu.requestAdapter();
   device = await adapter.requestDevice();
+  console.log("device", device);
 
   context = canvas.getContext("webgpu");
   format = navigator.gpu.getPreferredCanvasFormat();
@@ -56,7 +73,8 @@ async function init() {
     format,
     alphaMode: "opaque",
   });
-
+}
+async function initParticles() {
   // lecture des valeurs initiales  des sliders
   [particlesCount, particleSpeed, particleSize, particleColor] = readSlider();
   /*   console.log(
@@ -217,13 +235,13 @@ async function init() {
   //  device.queue.writeBuffer(indexBuffer, 0, indexData);
 
   // Chargement des shaders
-  const computeModule = device.createShaderModule({
+  computeModule = device.createShaderModule({
     code: await (await fetch("./scripts/webgpu1/compute1d.wgsl")).text(),
   });
-  const vertexModule = device.createShaderModule({
+  vertexModule = device.createShaderModule({
     code: await (await fetch("./scripts/webgpu1/vertex1d.wgsl")).text(),
   });
-  const fragmentModule = device.createShaderModule({
+  fragmentModule = device.createShaderModule({
     code: await (await fetch("./scripts/webgpu1/fragment1d.wgsl")).text(),
   });
 
@@ -339,7 +357,7 @@ async function init() {
     },
   });
 
-  render();
+  //render();
 }
 
 async function render() {
@@ -373,7 +391,7 @@ async function render() {
     colorAttachments: [
       {
         view: textureView,
-        clearValue: { r: 0.1, g: 0.3, b: 0.4, a: 1 },
+        clearValue: { r: 0.1, g: 0.1, b: 0.1, a: 1 },
         loadOp: "clear",
         storeOp: "store",
       },
@@ -408,10 +426,29 @@ async function render() {
   readBuffer.unmap(); */
 
   // Relancer l’animation
-  requestAnimationFrame(render);
+  //requestAnimationFrame(render);
+  animationFrameId = requestAnimationFrame(render);
 }
 //--------------------------------------functions----------------------------
+
+function stopRendering() {
+  console.log("stopRendering()");
+  cancelAnimationFrame(animationFrameId);
+}
+
+function startRendering() {
+  console.log("startRendering()");
+  animationFrameId = requestAnimationFrame(render);
+}
+
 function writeToBuffer(buffer, data, label = "inconnu") {
+  console.log("writteToBuffer()");
+  if (!device || !device.queue) {
+    console.warn(
+      `❌ Impossible d'écrire dans le buffer "${label}": device ou queue est indéfini`
+    );
+    return;
+  }
   device.queue.writeBuffer(buffer, 0, data);
   console.log(`✅ Données écrites dans : ${label}`);
 }
@@ -452,13 +489,17 @@ function readSlider() {
 function generateParticlesUniquePositions(particlesCount, minDist) {
   let positions = [];
   while (positions.length < particlesCount) {
-    let newPos = [(Math.random() * 2 - 1) * 0.9, (Math.random() * 2 - 1) * 0.9]; // ✅ Génère une position aléatoire
+    let newPos = [
+      (Math.random() * 2 - 1) * 0.95,
+      (Math.random() * 2 - 1) * 0.95,
+    ]; // ✅ Génère une position aléatoire
     //let newPos = [1.0, (Math.random() * 2 - 1) * 0.9]; // ✅test
 
     // Vérifie que la nouvelle position n'est pas trop proche des autres
-    let isUnique = positions.every(
+    /* let isUnique = positions.every(
       (p) => Math.hypot(p[0] - newPos[0], p[1] - newPos[1]) >= minDist
-    );
+    ); */
+    let isUnique = true;
 
     if (isUnique) {
       positions.push(newPos); // ✅ Ajoute la position validée
@@ -483,15 +524,11 @@ function generateParticlesCount(count) {
   );
   // console.log("newparticlesCount", newparticlesCount);
 
+  const particleDisplay = document.getElementById("particleCountDisplay");
+  particleDisplay.textContent = `Particles: ${newparticlesCount}`;
+
   return newparticlesCount; // Math.round(minParticles + curvedT * (maxParticles - minParticles));
 }
-
-/* function generateParticlesCount(count) {
-  console.log("generateParticlesCount");
-  //slider entre 1 et 100 et particlesCount entre 2 et 1000
-  particlesCount = parseInt(10.08 * count - 8.08);
-  return particlesCount;
-} */
 
 function generateParticlesSpeed(speed, ecartTypeSpeed) {
   //conversion slider 0 à 100 en speed min à max
@@ -514,7 +551,7 @@ function generateParticlesSpeed(speed, ecartTypeSpeed) {
     const angle = Math.random() * 2 * Math.PI;
     speeds.push([Math.cos(angle) * pspeedcor, Math.sin(angle) * pspeedcor]);
   }
-  console.log("generateParticlesSpeed", speeds);
+  //console.log("generateParticlesSpeed", speeds);
   return speeds;
 }
 
@@ -534,7 +571,7 @@ function generateParticlesSize(count, size) {
     size = Math.max(particlesSizeMin, Math.min(particlesSizeMax, sizeGenerée));
     sizes.push(size);
   }
-  console.log("generateParticleSize", sizes);
+  //console.log("generateParticleSize", sizes);
   return sizes;
 }
 // distribution normale gaussienne
@@ -547,14 +584,14 @@ function randomNormal(mean, stdDev) {
   return mean + z * stdDev;
 }
 function convertColor(colorName) {
-  console.log("test0", colorName);
+  // console.log("test0", colorName);
   const colors = {
-    red: [1.0, 0.6, 0.6, 1.0],
+    red: [1.0, 0.0, 0.0, 1.0],
     green: [0.0, 1.0, 0.0, 1.0],
-    blue: [0.6, 0.6, 1.0, 1.0],
-    yellow: [1.0, 1.0, 0.6, 1.0],
-    pink: [1.0, 0.75, 0.8, 1.0],
-    orange: [1.0, 0.6, 0.2, 1.0],
+    blue: [0.0, 0.0, 1.0, 1.0],
+    yellow: [1.0, 1.0, 0.0, 1.0],
+    pink: [1.0, 0.7, 0.8, 1.0],
+    orange: [1.0, 0.5, 0.1, 1.0],
     birdofparadise: [0.9, 0.4, 0.9, 1.0],
     tropicalSunset: [1.0, 0.4, 0.2, 1.0],
     mysticAurora: [0.4, 0.8, 0.9, 1.0],
@@ -568,7 +605,7 @@ function convertColor(colorName) {
     crimsonTwilight: [0.6, 0.1, 0.2, 1.0],
     forestWhisper: [0.2, 0.5, 0.2, 1.0],
   };
-  console.log("test", colors[colorName]);
+  // console.log("test", colors[colorName]);
   return new Float32Array(colors[colorName] || [1.0, 1.0, 1.0, 1.0]); // Blanc si inconnue
 }
 
@@ -699,7 +736,7 @@ function change() {
 
   const changedVars = getChangedVariables(oldValues, newValues, variableNames);
   console.log("Variables modifiées :", changedVars);
-  if (changedVars.includes("particlesCount")) changeCount();
+  if (changedVars.includes("particlesCount")) changeCount(readparticlesCount);
   if (changedVars.includes("particleSpeed")) changeSpeed(readparticleSpeed);
   if (changedVars.includes("particleSize")) changeSize(readparticleSize);
   if (changedVars.includes("particleColor")) changeColor(readparticleColor);
@@ -712,6 +749,7 @@ function getChangedVariables(oldValues, newValues, variableNames) {
       changed.push(variableNames[i]);
     }
   }
+  //console.log("getChangedVariables()", changed);
   return changed; // tableau des noms qui ont changé
 }
 
@@ -725,9 +763,6 @@ function changeColor(colorName) {
   writeToBuffer(colorBuffer, particlesColors, "colorBuffer");
 }
 
-function changeCount() {
-  console.log("changeCount()");
-}
 function changeSize(size) {
   particleSize = size; // mise  jour  size
   console.log("changeSize()");
@@ -736,11 +771,15 @@ function changeSize(size) {
 }
 
 function changeSpeed(newSpeed) {
-  console.log("changeSpeed() 🔁 Changement de vitesse des particules");
-  console.log("newSpeed", newSpeed);
+  console.log(
+    "changeSpeed() 🔁 Changement de vitesse des particules:",
+    "newSpeed",
+    newSpeed
+  );
+  particleSpeed = newSpeed;
 
   // 1. Générer les nouvelles vitesses
-  particlesSpeeds = generateParticlesSpeed(newSpeed, ecartTypeSpeed);
+  particlesSpeeds = generateParticlesSpeed(particleSpeed, ecartTypeSpeed);
 
   // 2. Mettre à jour particlesDatas uniquement pour VX et VY
   for (let i = 0; i < particlesCount; i++) {
@@ -782,6 +821,234 @@ function changeSizes(newSize) {
   // Réécrit dans le buffer GPU sans toucher aux autres données
   writeToBuffer(particlesBuffer, particlesDatas, "particlesBuffer");
   //device.queue.writeBuffer(particlesBuffer, 0, particlesDatas);
+}
+
+function changeCount(newCount) {
+  stopRendering();
+  console.log("changeCount()🔁 Changement du nombre de particules", newCount);
+
+  const oldCount = particlesCount;
+  // console.log("oc", oldCount, "nc", newCount);
+  if (oldCount >= newCount) {
+    //je tronque  particlesDatas
+    //particlesDatas.bytelength = newCount * 6; //je tronque mon tableau// pas le droit avec floatarray
+    const newParticlesDatas = new Float32Array(newCount * 6);
+    newParticlesDatas.set(particlesDatas.slice(0, newCount * 6)); // copie les 6 * newCount premières valeurs
+    particlesDatas = newParticlesDatas;
+  } else {
+    //newCount>=oldCount
+    //je rajoute newCount-oldCount valeur
+    [particlesCount, particleSpeed, particleSize, particleColor] = readSlider();
+
+    particlesCount = generateParticlesCount(particlesCount);
+    console.log("changeCount()particlesCount", particlesCount);
+    particlesPositions = new Float32Array(particlesCount * 2); // 2 coordonnées (x, y) par particle
+
+    particlesPositions = generateParticlesUniquePositions(particlesCount, 0.1);
+    //console.log("changeCount()particlesPositions", particlesPositions); // ✅ Vérification
+    // Génération des vitesses des particles
+    particlesSpeeds = new Float32Array(particlesCount * 2); // 2 coordonnées (vx, vy) par particle
+    particlesSpeeds = generateParticlesSpeed(particleSpeed, ecartTypeSpeed);
+    //console.log("changeCount()particlesSpeeds", particlesSpeeds); // ✅ Vérification
+    // Génération des tailles des particles
+    particlesSizes = new Float32Array(particlesCount); // 1 taille (size) par particle
+    particlesSizes = generateParticlesSize(particlesCount, particleSize);
+    const newParticlesDatas = new Float32Array(particlesCount * 6); //oblige de faire ca car methode push fonctionne pas sur floatArray
+
+    for (let i = 0; i < particlesCount; i++) {
+      let index = i * 6;
+      if (i < oldCount) {
+        newParticlesDatas[index] = particlesDatas[index]; // ✅ Récupère X correctement
+        newParticlesDatas[index + 1] = particlesDatas[index + 1]; // ✅ Récupère Y correctement
+        newParticlesDatas[index + 2] = particlesDatas[index + 2]; // ✅ SIZE
+        newParticlesDatas[index + 3] = 0.0; //particlesDatas[index + 3]; // ✅ _PAD pour alignement memoire gpu
+        newParticlesDatas[index + 4] = particlesDatas[index + 4]; // ✅ VX
+        newParticlesDatas[index + 5] = particlesDatas[index + 5]; // ✅ VY
+      } else {
+        newParticlesDatas[index] = particlesPositions[i][0]; // ✅ Récupère X correctement
+        newParticlesDatas[index + 1] = particlesPositions[i][1]; // ✅ Récupère Y correctement
+        newParticlesDatas[index + 2] = particlesSizes[i]; // ✅ SIZE
+        newParticlesDatas[index + 3] = 0.0; // ✅ _PAD pour alignement memoire gpu
+        newParticlesDatas[index + 4] = particlesSpeeds[i][0]; // ✅ VX
+        newParticlesDatas[index + 5] = particlesSpeeds[i][1]; // ✅ VY
+      }
+    }
+    //console.log("changeCount()", newParticlesDatas);
+
+    // particlesDatas = new Float32Array(particlesCount * 6); // je recreer particlesDatas
+    particlesDatas = newParticlesDatas;
+  }
+
+  particlesCount = newCount;
+
+  // 🔁 Sauvegarde temporaire de l'ancien buffer
+  const oldParticlesBuffer = particlesBuffer;
+  // 🔧 Création du nouveau buffer (avec nouvelle taille si nécessaire)
+  particlesBuffer = device.createBuffer({
+    size: particlesDatas.byteLength,
+    usage:
+      GPUBufferUsage.VERTEX |
+      GPUBufferUsage.COPY_DST |
+      GPUBufferUsage.STORAGE |
+      GPUBufferUsage.COPY_SRC,
+  });
+  // 📝 Écriture des nouvelles données dans le buffer GPU
+  writeToBuffer(particlesBuffer, particlesDatas, "particlesBuffer");
+
+  //ne pas oublier le correctionBuffer
+  const oldCorrectionBuffer = correctionBuffer;
+  correctionDatas = new Float32Array(4 * particlesCount); // Par défaut, Float32Array est déjà rempli de 0.0
+  // correctionDatas.fill(0.0); // Mais tu peux le faire explicitement si besoin :
+  correctionBuffer = device.createBuffer({
+    size: correctionDatas.byteLength,
+    usage:
+      GPUBufferUsage.STORAGE |
+      GPUBufferUsage.COPY_DST |
+      GPUBufferUsage.COPY_SRC,
+  });
+  writeToBuffer(correctionBuffer, correctionDatas, "correctionBuffer");
+
+  //ne pas oublier le particlesCount buffer
+  const oldUniformBuffer1 = uniformBuffer1;
+  const uniformData = new Uint32Array([particlesCount]);
+  uniformBuffer1 = device.createBuffer({
+    size: 4,
+    usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+  });
+  writeToBuffer(uniformBuffer1, uniformData, "uniformBuffer1");
+
+  // ✅ Une fois qu'on est sûr que plus rien ne lesutilise
+  // 1. Détruire les anciens buffer si nécessaire
+  device.queue.onSubmittedWorkDone().then(() => {
+    // Tu peux maintenant détruire / remplacer les buffers
+    if (oldParticlesBuffer) oldParticlesBuffer.destroy();
+    if (oldCorrectionBuffer) oldCorrectionBuffer.destroy();
+    if (oldUniformBuffer1) oldUniformBuffer1.destroy();
+    console.log("old buffers destroy");
+  });
+
+  // 🔗 Met à jour les bind groups si besoin ici ! (si `particlesBuffer` est dans un `bindGroup`)
+  updateBindGroups(); // exemple — à adapter selon ton code
+
+  console.log(`✅ ${newCount} particules prêtes !`);
+  startRendering();
+}
+
+function updateBindGroups() {
+  console.log("updateBindGroups()");
+  //compute bind groups
+
+  const computeBindGroupLayout = device.createBindGroupLayout({
+    entries: [
+      {
+        binding: 0,
+        visibility: GPUShaderStage.COMPUTE,
+        buffer: { type: "storage" },
+      }, // ParticlesDatas buffer
+      {
+        binding: 1,
+        visibility: GPUShaderStage.COMPUTE,
+        buffer: { type: "uniform" },
+      }, // ✅ Ajout de `u_aspect`
+      {
+        binding: 3,
+        visibility: GPUShaderStage.COMPUTE,
+        buffer: { type: "uniform" },
+      }, // ✅ Ajout de `particlesCount`
+      {
+        binding: 2,
+        visibility: GPUShaderStage.COMPUTE,
+        buffer: { type: "storage" },
+      }, //Ajout de corrections buffer
+    ],
+  });
+
+  computeBindGroup = device.createBindGroup({
+    layout: computeBindGroupLayout,
+    entries: [
+      { binding: 0, resource: { buffer: particlesBuffer } }, // Positions
+      { binding: 1, resource: { buffer: uniformBuffer } }, // ✅ Ajout de `u_aspect`
+      { binding: 3, resource: { buffer: uniformBuffer1 } }, // ✅ Ajout de `particlesCount`
+      //{ binding: 2, resource: { buffer: colorBuffer } }, // Couleur (optionnel pour le compute)
+      { binding: 2, resource: { buffer: correctionBuffer } }, //Corrections
+    ],
+  });
+
+  // 2️⃣ Crée les pipelines de calcul
+  computePipeline1 = device.createComputePipeline({
+    layout: device.createPipelineLayout({
+      bindGroupLayouts: [computeBindGroupLayout],
+    }),
+    compute: { module: computeModule, entryPoint: "simulate" },
+  });
+
+  computePipeline2 = device.createComputePipeline({
+    layout: device.createPipelineLayout({
+      bindGroupLayouts: [computeBindGroupLayout],
+    }),
+    compute: { module: computeModule, entryPoint: "apply_corrections" },
+  });
+  //console.log("computePipeline1:", computePipeline1); // 🚀 Vérification de la création du pipeline
+
+  // render bind groups
+  //create render bing group layout
+  const renderBindGroupLayout = device.createBindGroupLayout({
+    entries: [
+      {
+        binding: 2,
+        visibility: GPUShaderStage.FRAGMENT,
+        buffer: { type: "uniform" },
+      },
+      {
+        binding: 0,
+        visibility: GPUShaderStage.VERTEX,
+        buffer: { type: "read-only-storage" }, // ✅ Correction : `read-only storage` pour le vertex shader
+      },
+      {
+        binding: 1,
+        visibility: GPUShaderStage.VERTEX,
+        buffer: { type: "uniform" },
+      },
+    ],
+  });
+
+  renderBindGroup = device.createBindGroup({
+    layout: renderBindGroupLayout,
+    entries: [
+      { binding: 2, resource: { buffer: colorBuffer } }, // ✅ Couleur (vec4<f32>)
+      { binding: 1, resource: { buffer: uniformBuffer } }, // ✅ Aspect ratio (float32)
+      { binding: 0, resource: { buffer: particlesBuffer } }, // ✅ Particules (storage buffer)
+    ],
+  });
+
+  // render pipeline
+  renderPipeline = device.createRenderPipeline({
+    layout: device.createPipelineLayout({
+      bindGroupLayouts: [renderBindGroupLayout],
+    }),
+    vertex: {
+      module: vertexModule,
+      entryPoint: "main",
+      buffers: [
+        {
+          arrayStride: 2 * Float32Array.BYTES_PER_ELEMENT,
+          attributes: [{ shaderLocation: 0, offset: 0, format: "float32x2" }],
+        },
+      ],
+    },
+    fragment: {
+      module: fragmentModule,
+      entryPoint: "main",
+      targets: [{ format }],
+    },
+    primitive: {
+      topology: "triangle-list", // ✅ Cercle plein avec un triangle-fan
+      //cullMode: "none", // ✅ Désactivation du culling (aucune face cachée)
+      //frontFace: "ccw", // ✅ Sens de rendu antihoraire (convention standard)
+    },
+  });
+
+  render();
 }
 
 /* function change(count, speed, size, color) {
