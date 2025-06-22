@@ -14,30 +14,26 @@
   </head>
   <body>
     <div id="container">
+      <div id="particleCountDisplay">Particles: 0</div>
       <canvas id="gpuCanvas"></canvas>
       <div id="controlsContainer">
         <div id="controls">
           <label>
             Nombre de balles
-            <input
-              type="range"
-              id="countSlider"
-              min="2"
-              max="1000"
-              value="10"
-            />
+            <input type="range" id="countSlider" value="20" />
+            <!-- min="2" max="1000" -->
           </label>
           <label>
             Taille balles(% écran)
-            <input type="range" id="sizeSlider" value="30" />
+            <input type="range" id="sizeSlider" value="20" />
           </label>
 
           <label
             >Vitesse des balles
-            <input type="range" id="speedSlider" value="1" />
+            <input type="range" id="speedSlider" value="30" />
           </label>
 
-          <label>
+          <!--      <label>
             Vitesse de rotation
             <input
               type="range"
@@ -47,16 +43,19 @@
               value="2"
               step="0.2"
             />
-          </label>
+          </label> -->
           <label>
             Couleur (dégradé)
             <select id="colorSelect">
-              <option value="blue">Bleu</option>
-              <option value="yellow">Jaune</option>
-              <option value="green">Vert</option>
-              <option value="red">Rouge</option>
-              <option value="pink">Rose</option>
+              <option value="whereisWally">Where's Wally?</option>
+              <option value="blue">Blue</option>
+              <option value="yellow">Yellow</option>
+              <option value="green">Green</option>
+              <option value="red">Red</option>
+              <option value="pink">Pink</option>
               <option value="orange">Orange</option>
+              <option value="white">White</option>
+              <option value="black">Black</option>
               <option value="birdofparadise">Oiseaux de paradis</option>
               <option value="tropicalSunset">Tropical Sunset</option>
               <option value="mysticAurora">Mystic Aurora</option>
@@ -69,6 +68,7 @@
               <option value="goldenHour">Golden Hour</option>
               <option value="crimsonTwilight">Crimson Twilight</option>
               <option value="forestWhisper">forest Whisper</option>
+              <option value="multicolor">multicolor</option>
             </select>
           </label>
           <!--    <label>
@@ -80,7 +80,7 @@
             <button
               onclick="import('./scripts/webgpu1/mainwebgpu1e.js').then(m => m.goFullscreen())"
             >
-              Plein écran
+              Full Screen
             </button>
             <button id="playMusicButton" onclick="toggleMusic()">
               Play music

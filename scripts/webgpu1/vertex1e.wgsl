@@ -13,9 +13,21 @@ var<uniform> u_aspect: f32;
 
 struct VertexOutput {
   @builtin(position) position: vec4<f32>,
-  @location(1) size: f32,
-  @location(0) uv: vec2<f32>,
+    @location(1) size: f32,
+      @location(0) uv: vec2<f32>,
+       @location(2) color: vec4<f32>,
+       @interpolate(flat) @location(3) particleIndex: u32, // ✅ index
 };
+
+@group(0) @binding(4)
+var<storage, read> colorBufferDif: array<vec4<f32>>;
+
+@group(0) @binding(3)
+var<storage, read> colorTypeUniformBuffer: u32;
+
+
+
+
 
 @vertex
 fn main(
@@ -23,11 +35,11 @@ fn main(
   @builtin(instance_index) index: u32
 ) -> VertexOutput {
   let particle = particlesDatas[index];
+  let color = colorBufferDif[index];
 
   // Ajuste aspect ratio
   //✅ Tu corriges la position du cercle pour compenser l’aspect ratio dans l’écran :
-  //let aspectCorrectedPos = vec2<f32>(particle.pos.x /u_aspect, particle.pos.y);
-    let aspectCorrectedPos = vec2<f32>(particle.pos.x, particle.pos.y);
+  let aspectCorrectedPos = vec2<f32>(particle.pos.x , particle.pos.y);
 
   // Échelle du cercle modèle
   //👉 Tes sommets du cercle (dans position du vertex shader) sont eux aussi affectés par l’aspect ratio.
@@ -36,9 +48,14 @@ fn main(
 
   var output: VertexOutput;
   output.position = vec4<f32>(scaledPos + aspectCorrectedPos, 0.0, 1.0);
+
   output.size=particle.size;
  
   output.uv = position;   // Les UV centrés
+
+      
+    output.color = color;
+      output.particleIndex = index; // 👈 Transmis au fragment
 
   return output;
 }
