@@ -23,8 +23,8 @@
           "scripts/shader7.js": true,
     "scripts/shaderpingpong/": true,
     "scripts/cubick_rubs": true,
-    "assets": true,
-    "css": true,
+    "assets": false,
+    "css": false,
     "effacable": true,
     "fonctionnebien": true
   }

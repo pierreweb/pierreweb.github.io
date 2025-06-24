@@ -1,9 +1,259 @@
+@font-face {
+  font-family: "ObelixPro";
+  src: url("/assets/fonts/ObelixProB-cyr.ttf") format("truetype");
+}
+
+:root {
+  --colorbackground: #1a3262;
+  --colorbackgroundbody: #05101a;
+  --colorbackgroundcontainer: #08131d;
+  /*   --colorborder: rgba(85, 172, 215, 0.9);
+  --colorboxshadow: rgba(50, 79, 124, 0.8); */
+  --border: 5px solid rgba(85, 172, 215, 0.3);
+  --border-radius: 15px; /* Coins arrondis */
+  --box-shadow: 3px 3px 20px rgba(50, 79, 124, 0.8);
+  --colortitle: #d9ce02;
+  --colorparagraphe: #f8f866;
+  --colorunderline: #f8f866;
+  --colorunderlineover: #05ccf8;
+  --mainfont: "Adventure", sans-serif;
+  --titlefont: "kgcrossingaline", serif;
+  --fontsize: 16px;
+}
+
+/* -----------------------------
+   POLICES
+----------------------------- */
+/* Polices pour les titres */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--titlefont) !important;
+  /* font-family: "Arial", sans-serif; */
+  text-shadow: 0 0 8px #1e1d17;
+  color: var(--colortitle);
+}
+
+h1 {
+  font-size: 2.5rem;
+  font-weight: bold;
+}
+
+h2 {
+  font-size: 2rem;
+  font-weight: bold;
+}
+
+h3 {
+  font-size: 1.75rem;
+  font-weight: 600; /* Semi-bold */
+}
+
+h4 {
+  font-size: 1.5rem;
+  font-weight: 600; /* Semi-bold */
+}
+
+h5 {
+  font-size: 1.25rem;
+  font-weight: normal;
+}
+
+h6 {
+  font-size: 1rem;
+  font-weight: normal;
+}
+
+/* Polices pour le paragraphe */
+p {
+  font-size: 1rem;
+  font-weight: normal;
+  line-height: 1.6;
+  color: var(--colorparagraphe);
+  /* font-family: "Verdana", sans-serif; */
+  font-family: var(--mainfont) !important;
+}
+
+/* Polices pour les liens */
+a {
+  font-size: 1rem;
+  font-weight: normal;
+  color: var(--colorunderline);
+  text-decoration: none; /* Suppression du soulignement */
+  font-family: var(--mainfont) !important;
+}
+
+a:hover {
+  color: var(--colorunderlineover);
+  text-decoration: underline; /* Soulignement au survol */
+}
+
+/* Polices pour les listes */
+li {
+  font-size: 1rem;
+  color: var(--colorparagraphe);
+  /* font-family: "Tahoma", sans-serif; */
+  font-family: var(--mainfont) !important;
+}
+
+ul {
+  padding-left: 20px; /* Indentation des listes */
+  list-style-type: disc; /* Style des puces */
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* ----------------------------
+   CONTENEUR PRINCIPAL  
+----------------------------- */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 15px; /* Ajustez l'espacement entre les éléments ici */
+  width: 80%;
+  max-width: 1200px;
+  margin: auto;
+  padding: 5px;
+  /* background-color: blue; */
+  background-color: var(--colorbackgroundcontainer);
+  max-width: 80%;
+  padding: 1rem;
+  word-wrap: break-word;
+}
+
+.header,
+.navbar,
+.main,
+.footer {
+  width: 100%;
+  background-color: var(--colorbackgroundcontainer);
+  border-radius: var(--border-radius);
+
+  padding: 10px;
+  text-align: center;
+  /* box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);  */
+
+  border: var(--border);
+  box-shadow: var(--box-shadow);
+}
+
+/* ----------------------------
+   HEADER
+----------------------------- */
+.header img {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 15px;
+}
+.header {
+  background-image: url(/images/bannieres/Conanthebarbarianheader1.png);
+  background-size: contain; /* L'image couvre tout l'élément */
+  background-repeat: no-repeat;
+  background-position: center; /* Centre limage */
+  height: 200px; /* Hauteur fixe pour le header */
+  flex: auto;
+  width: 100%; /* Largeur pleine */
+  border-radius: 15px; /* Coins arrondis */
+  overflow: hidden; /* Masque tout dépassement éventuel */
+  /* box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); */
+  /* background-color: var(--colorbackground); */
+  /* border: 3px solid #e8edf0;
+  box-shadow: 3px 3px 20px var(--colorboxshadow); */
+}
+
+/* ----------------------------
+   NAVBAR
+----------------------------- */
+.navbar {
+  width: 100%;
+  /* height: 50px; Hauteur fixe pour la navbar */
+  flex: auto;
+  /* background-color: var(--colorbackground); */
+  padding: 10px;
+
+  /* border: 3px solid #d8e0eb;
+  box-shadow: 0 0 15px #33b8ff;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); */
+  border-radius: 15px;
+  text-align: center;
+
+  display: flex; /* Ajouté pour afficher les liens horizontalement */
+  /*justify-content: center; Centrerleslienshorizontalement */
+  justify-content: space-between;
+  gap: 20px; /* Espacement entre les liens */
+  margin: auto; /* Important */
+  /* text-align: center; */
+}
+
+.navbar ul {
+  list-style: none; /* Supprime les puces */
+  margin: auto;
+  padding: 0px;
+  display: flex; /* Organisation horizontale */
+  justify-content: space-around; /* Espacement uniforme entre les éléments */
+
+  /* font-family: var(--titlefont) !important; */
+  font-size: 2.5rem;
+  font-weight: bold;
+}
+
+.navbar li {
+  margin: auto; /* Supprime le margin autour des items */
+  /* font-family: var(--titlefont) !important; */
+  font-size: 2.5rem;
+  font-weight: bold;
+}
+
+.navbar a {
+  /* color: white;  */
+  font-weight: bold;
+  text-decoration: none; /* Supprime le soulignement */
+  margin: 0 15px;
+
+  font-size: 1em;
+  /* padding: 0.5em 1em; Espacement interne pour les liens */
+  transition: background-color 0.3s; /* Animation pour le changement de couleur */
+  font-family: var(--titlefont) !important;
+  color: var(--colortitle) !important;
+  font-size: 2.5rem;
+  font-weight: bold;
+  display: inline-block; /* Nécessaire pour que transform fonctionne proprement */
+  transition: transform 0.3s ease, text-shadow 0.3s ease;
+}
+
+.navbar a:hover {
+  /* background-color: #575757; Couleur de fond au survol */
+  /* color: #fff3c0; */
+  transform: scale(1.2); /* Agrandit sans affecter le flux du document */
+  text-shadow: 0 0 8px #9ccbfd;
+}
+.main {
+  text-align: left;
+}
+.main ul {
+  list-style: none; /* Supprime les puces */
+}
+
 body,
 html {
   margin: 0;
   padding: 0;
   overflow: hidden;
-  background: black;
+  /* background: black; */
+  line-height: 1.6;
+  background-color: var(--colorbackgroundbody);
+  /* background-color: var(--colorbackground); */
+  color: var(--textcolor);
+  font-family: var(--mainfont);
 }
 
 #container {
@@ -38,20 +288,6 @@ input[type="range"] {
   width: 100%;
 } */
 
-/* #controls {
-  position: absolute;
-  bottom: 10px;
-  right: 10px;
-  background: rgba(0, 0, 0, 0.5);
-  color: white;
-  padding: 10px;
-  border-radius: 10px;
-  z-index: 10;
-  opacity: 0.4;
-  pointer-events: none; /* désactive interactions quand masqué 
-  transition: opacity 0.3s;
-}
- */
 label {
   display: block;
   margin-top: 8px;
@@ -73,6 +309,20 @@ input[type="range"] {
 }
 
 /* Panneau de contrôle */
+/* #controls {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  padding: 10px;
+  border-radius: 10px;
+  z-index: 10;
+  opacity: 0.4;
+  pointer-events: none; /* désactive interactions quand masqué 
+  transition: opacity 0.3s;
+}
+ */
 #controls {
   position: absolute;
   bottom: 10px;
@@ -122,4 +372,71 @@ input[type="range"] {
   padding: 4px 8px;
   border-radius: 4px;
   z-index: 10;
+}
+
+.iframe-container {
+  /* width: 100%;
+            max-width: 1000px;
+            margin: 20px auto;
+            padding: 10px; */
+  background-color: var(--colorbackgroundcontainer);
+  /* width: 100%; */
+  flex: 100%;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  min-height: 90vh;
+  /* 🔄 Prend toute la hauteur de la fenêtre */
+  align-items: top;
+  justify-content: left;
+  gap: 20px;
+  padding: 10px;
+  border: var(--border);
+  box-shadow: var(--box-shadow);
+  border-radius: var(--border-radius);
+}
+
+iframe {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  min-height: 90%;
+  border: none;
+  flex: 100%;
+  /* min-width: 300px; */
+  /* max-width: 100%; */
+
+  background-color: var(--colorbackground);
+  overflow: hidden;
+  /* border: var(--border);
+  box-shadow: var (--box-shadow);
+  border-radius: 10px; */
+  /* box-shadow: 0 0 10px #000; 
+  box-shadow: var (--box-shadow); */
+  transition: transform 0.3s;
+}
+
+/*---------------------------
+  back-button
+----------------------------*/
+
+/* .back-button {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  z-index: 1000;
+} */
+
+.back-button {
+  display: block;
+  text-align: left;
+  align-self: start;
+  margin: 30px;
+  color: var(--colortitle);
+}
+
+.back-button:hover {
+  text-decoration: none;
+  /* color: var(--colortitle); */
+  transform: scale(1.1);
 }

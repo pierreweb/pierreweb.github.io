@@ -3,7 +3,27 @@
   <head>
     <meta charset="UTF-8" />
     <title>Mes Shaders</title>
-    <style>
+    <link rel="stylesheet" href="css/style.css" />
+    <!-- <link id="theme-style" rel="stylesheet" href="" /> -->
+
+    <!-- Polices -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&display=swap"
+      rel="stylesheet"
+    />
+    <!--   <style>
       body {
         font-family: Arial, sans-serif;
         background-color: #111;
@@ -38,76 +58,107 @@
         text-decoration: underline;
         color: #ffffff;
       }
-    </style>
+    </style> -->
   </head>
   <body>
-    <h1>Liste des shaders</h1>
-    <ul>
-      <li><a href="shader1.html">Shader 1 changement background color</a></li>
-      <li>
-        <a href="shader2.html"
-          >Shader 2 triangle moving & boucing & changing color</a
-        >
-      </li>
-      <li>
-        <a href="shader3.html"
-          >Shader 3 triangles moving & rotating & bouncing & changing color</a
-        >
-      </li>
-      <li><a href="shader4.html">Shader 4 moving and bouncing balls </a></li>
-      <li>
-        <a href="shader5.html"
-          >Shader 5 moving & bouncing balls with a texture
-        </a>
-      </li>
-      <li>
-        <a href="shader6.html"
-          >Shader 6 triangle moving & boucing on gradient & settle</a
-        >
-      </li>
-      <li>
-        <a href="shader7.html"
-          >Shader 7 color gradient triangles moving & bouncing & settle</a
-        >
-      </li>
-      <li>
-        <a href="cubick_rubs.html"
-          >cubick_rubs un shader que j'avais fait il y a 10 ans il faut que je
-          le mette à jours</a
-        >
-      </li>
-      <li>
-        <a href="shaderpingpong.html">balls moving & bouncing & colliding</a>
-      </li>
-      <li>
-        <a href="shaderwebgpu.html"
-          >webgpu test squares moving & bouncing & colliding</a
-        >
-      </li>
-      <li>
-        <a href="shaderwebgpu1.html"
-          >webgpu test balls moving & bouncing & colliding</a
-        >
-      </li>
-      <li>
-        <a href="shaderwebgpu1c.html"
-          >webgpu test c balls moving & bouncing & colliding ouvrir avec chrome
-          pour webgpu</a
-        >
-      </li>
-      <li>
-        <a href="shaderwebgpu1d.html"
-          >webgpu test d balls moving & bouncing & colliding ouvrir avec chrome
-          pour webgpu</a
-        >
-      </li>
-      <li>
-        <a href="shaderwebgpu1e.html"
-          >webgpu test e balls moving & bouncing & colliding ouvrir avec chrome
-          pour webgpu</a
-        >
-      </li>
-    </ul>
+    <div class="container">
+      <!-- <header class="header"></header> -->
+
+      <!-- <nav class="navbar">
+        <iframe src="navbar.html"></iframe> 
+      </nav> -->
+      <nav class="navbar">
+        <ul>
+          <!-- <li><a href="#home">Home</a></li> -->
+          <li><a href="index.html" class="home-button">Home</a></li>
+
+          <!-- <li><a href="#about">About</a></li>
+          <li><a href="#services">Services</a></li>
+          <li><a href="contact.php">Contact</a></li> -->
+          <li><a href="page_liens.html">Liens</a></li>
+          <!-- <li><a href="affichedatabase.php">database</a></li>
+          <li><a href="page1_3d.php">magic portal</a></li>
+          <li><a href="page2_3d.php">black pyramid</a></li>
+          <li><a href="page3_3d.php">arena</a></li> -->
+        </ul>
+      </nav>
+      <div class="main">
+        <h1>Liste de mes shaders</h1>
+        <ul>
+          <li>
+            <a href="shader1.html">Shader 1 changement background color</a>
+          </li>
+          <li>
+            <a href="shader2.html"
+              >Shader 2 triangle moving & boucing & changing color</a
+            >
+          </li>
+          <li>
+            <a href="shader3.html"
+              >Shader 3 triangles moving & rotating & bouncing & changing
+              color</a
+            >
+          </li>
+          <li>
+            <a href="shader4.html">Shader 4 moving and bouncing balls </a>
+          </li>
+          <li>
+            <a href="shader5.html"
+              >Shader 5 moving & bouncing balls with a texture
+            </a>
+          </li>
+          <li>
+            <a href="shader6.html"
+              >Shader 6 triangle moving & boucing on gradient & settle</a
+            >
+          </li>
+          <li>
+            <a href="shader7.html"
+              >Shader 7 color gradient triangles moving & bouncing & settle</a
+            >
+          </li>
+          <li>
+            <a href="cubick_rubs.html"
+              >cubick_rubs un shader que j'avais fait il y a 10 ans il faut que
+              je le mette à jours</a
+            >
+          </li>
+          <li>
+            <a href="shaderpingpong.html"
+              >balls moving & bouncing & colliding</a
+            >
+          </li>
+          <li>
+            <a href="shaderwebgpu.html"
+              >webgpu test squares moving & bouncing & colliding</a
+            >
+          </li>
+          <li>
+            <a href="shaderwebgpu1.html"
+              >webgpu test balls moving & bouncing & colliding</a
+            >
+          </li>
+          <li>
+            <a href="shaderwebgpu1c.html"
+              >webgpu test c balls moving & bouncing & colliding ouvrir avec
+              chrome pour webgpu</a
+            >
+          </li>
+          <li>
+            <a href="shaderwebgpu1d.html"
+              >webgpu test d balls moving & bouncing & colliding ouvrir avec
+              chrome pour webgpu</a
+            >
+          </li>
+          <li>
+            <a href="shaderwebgpu1e.html"
+              >webgpu test e balls moving & bouncing & colliding ouvrir avec
+              chrome pour webgpu</a
+            >
+          </li>
+        </ul>
+      </div>
+    </div>
   </body>
 </html>
 <!-- Note: This is a simple HTML page listing shaders. Each link points to a different shader page. -->
